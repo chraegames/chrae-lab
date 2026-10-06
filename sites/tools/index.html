@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- title / description / canonical / OG are injected at build time from
+         src/site/manifest.ts — see scripts/head.ts. -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#FAF9F6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0F1113" media="(prefers-color-scheme: dark)" />
+  </head>
+  <body>
+    <!-- #root is filled at build time with the prerendered <Landing/>; src/hub/main.ts only adds CSS + the theme toggle. -->
+    <div id="root"></div>
+    <script type="module" src="/src/hub/main.ts"></script>
+  </body>
+</html>

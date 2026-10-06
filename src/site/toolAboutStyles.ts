@@ -28,4 +28,5 @@ export const TOOL_ABOUT_STYLES = `
 .ta-more .ta-label{color:var(--ink-index);text-transform:uppercase;letter-spacing:0.14em;font-size:11px;margin-right:4px}
 .ta-more a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--border-strong);padding-bottom:1px}
 .ta-more a:hover{color:var(--accent-ink);border-color:var(--accent)}
+.ta-more+.ta-more{border-top:0;padding-top:10px}
 `;

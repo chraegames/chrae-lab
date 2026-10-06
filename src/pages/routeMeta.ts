@@ -1,19 +1,17 @@
-// FIRE Planner's view of the site manifest: the content pages that live under
-// /fire-planner/, plus the planner's own home path. Pure data so ContentLayout
+// FIRE Planner's view of the site manifest: the content pages of the fire
+// site, plus the planner's own home path ('/'). Pure data so ContentLayout
 // can build "Related" links without importing page components.
 //
 // To add a FIRE content page: add a manifest entry (area: 'fire-planner'), a
 // Content component under src/pages/<slug>/, map it in
-// src/site/prerenderPages.tsx, and create fire-planner/<slug>/index.html.
+// src/site/prerenderPages.tsx, and create sites/fire/<slug>/index.html.
 
 import { PAGES, pathFor } from '../site/manifest';
-
-export { SITE_ORIGIN } from '../site/manifest';
 
 export interface RouteMeta {
   /** Short slug as used by the Content components, e.g. "coast-fire-calculator". */
   slug: string;
-  /** Absolute path with trailing slash, e.g. "/fire-planner/coast-fire-calculator/". */
+  /** Path on the fire site, with trailing slash, e.g. "/coast-fire-calculator/". */
   path: string;
   title: string;
   description: string;

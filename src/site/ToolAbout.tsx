@@ -10,7 +10,7 @@
 // the FAQ answers in native <details> accordions so the text stays in the DOM
 // (indexable, works without JS) without dominating the page.
 
-import { HUB, relatedTools, type SiteEntry } from './manifest';
+import { BRAND_NAME, hrefFor, otherSites, relatedTools, siteOf, type SiteEntry } from './manifest';
 import { TOOL_ABOUT_STYLES } from './toolAboutStyles';
 
 export function ToolAbout({ entry }: { entry: SiteEntry }) {
@@ -52,8 +52,8 @@ export function ToolAbout({ entry }: { entry: SiteEntry }) {
           </div>
         )}
 
-        <nav aria-label="More tools" className="ta-more">
-          <span className="ta-label">More from {HUB.name}</span>
+        <nav aria-label={`More from ${siteOf(entry).name}`} className="ta-more">
+          <span className="ta-label">More from {siteOf(entry).name}</span>
           <ul>
             {related.map(t => (
               <li key={t.slug}>
@@ -61,8 +61,19 @@ export function ToolAbout({ entry }: { entry: SiteEntry }) {
               </li>
             ))}
             <li>
-              <a href={HUB.path}>All tools</a>
+              <a href="/">{siteOf(entry).homeLabel}</a>
             </li>
+          </ul>
+        </nav>
+
+        <nav aria-label={`More from ${BRAND_NAME}`} className="ta-more">
+          <span className="ta-label">Also from {BRAND_NAME}</span>
+          <ul>
+            {otherSites(entry.site).map(s => (
+              <li key={s.slug}>
+                <a href={hrefFor(s, entry.site)}>{s.name}</a>
+              </li>
+            ))}
           </ul>
         </nav>
       </div>

@@ -70,12 +70,12 @@ export function FourPercentContent() {
         FIRE Planner does exactly that in your browser: set your spending, returns, and
         time horizon and see your effective withdrawal rate evolve, instead of trusting
         one number.{' '}
-        <A href="/fire-planner/">Open the planner</A> — it's free and private, with no signup.
+        <A href="/">Open the planner</A> — it's free and private, with no signup.
       </P>
       <P>
-        Related: <A href="/fire-planner/retirement-withdrawal-strategy/">tax-efficient withdrawal
+        Related: <A href="/retirement-withdrawal-strategy/">tax-efficient withdrawal
         strategy</A> covers <em>which</em> accounts to draw from, and{' '}
-        <A href="/fire-planner/coast-fire-calculator/">the Coast FIRE calculator</A> covers getting
+        <A href="/coast-fire-calculator/">the Coast FIRE calculator</A> covers getting
         to the nest egg in the first place.
       </P>
     </ContentLayout>

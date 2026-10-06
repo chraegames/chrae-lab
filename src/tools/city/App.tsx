@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ToolShell } from '../../components/layout/ToolShell';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { byPath } from '../../site/manifest';
+import { bySlug } from '../../site/manifest';
 import { track } from '../../utils/analytics';
 import { TICKS_PER_MONTH } from './constants';
 import { createSimClient, type SimClient } from './client';
@@ -34,7 +34,7 @@ import { densifyActions, findSite, serviceActions, townActions } from './sim/sce
 import { MILESTONES } from './sim/milestones';
 import { type Action, type ActionFail, type AdvisorMsg, type Density, type HudStats, type Notice, type OverlayKind, type Rect, type Speed, type Tool, type XY } from './types';
 
-const entry = byPath('/city/')!;
+const entry = bySlug('city');
 const HUD_INTERVAL = 250;
 const SAVE_INTERVAL = 5000;
 

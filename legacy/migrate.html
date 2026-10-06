@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="robots" content="noindex" />
+<title>Chrae Lab storage bridge</title>
+</head>
+<body>
+<!--
+  Served at https://chraegames.cloud/migrate.html, the only page left on the
+  apex (everything else 301s to fire./games./tools.chraegames.cloud). The new
+  sites load it once in a hidden iframe and ask for their saved data, which
+  still lives in this origin's localStorage — see src/site/legacyStorage.ts.
+  nginx only allows *.chraegames.cloud to frame it (frame-ancestors).
+-->
+<script>
+(function () {
+  var ALLOWED_ORIGIN = /^https:\/\/(fire|games|tools)\.chraegames\.cloud$/;
+  // Must cover every key in SITE_STORAGE_KEYS (legacyStorage.test.ts checks it).
+  var KEY_OK = /^(chraeLab\.[A-Za-z.]+|financial-planner-[a-z]+|firePlanner(Theme|IntroSeen))$/;
+  window.addEventListener('message', function (e) {
+    if (!ALLOWED_ORIGIN.test(e.origin)) return;
+    var req = e.data;
+    if (!req || req.type !== 'chrae-legacy-request' || !Array.isArray(req.keys)) return;
+    var out = {};
+    try {
+      for (var i = 0; i < req.keys.length; i++) {
+        var key = req.keys[i];
+        if (typeof key !== 'string' || !KEY_OK.test(key)) continue;
+        var value = localStorage.getItem(key);
+        if (value !== null) out[key] = value;
+      }
+    } catch (err) {
+      // storage blocked: answer with nothing so the caller stops waiting
+    }
+    e.source.postMessage({ type: 'chrae-legacy-data', data: out }, e.origin);
+  });
+})();
+</script>
+</body>
+</html>

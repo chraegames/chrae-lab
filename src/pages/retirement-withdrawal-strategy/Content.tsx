@@ -65,9 +65,9 @@ export function WithdrawalStrategyContent() {
         levels and watch the resulting tax bill in real time.
       </P>
       <P>
-        <A href="/fire-planner/">Open the planner</A> to model your own accounts — free, private, no
+        <A href="/">Open the planner</A> to model your own accounts — free, private, no
         signup. For the spending side of the question, see{' '}
-        <A href="/fire-planner/4-percent-rule/">the 4% rule and safe withdrawal rates</A>.
+        <A href="/4-percent-rule/">the 4% rule and safe withdrawal rates</A>.
       </P>
     </ContentLayout>
   );

@@ -1,19 +1,54 @@
-// Site-wide page manifest — the single source of truth for every URL the site
-// serves: the hub landing page, each tool ("app"), and each static content page.
+// Page manifest — the single source of truth for every URL across the three
+// Chrae Lab sites, each on its own subdomain and built separately:
+//
+//   fire  → https://fire.chraegames.cloud   the FIRE planner (home) + its guides
+//   games → https://games.chraegames.cloud  games landing + one page per game
+//   tools → https://tools.chraegames.cloud  tools landing + one page per tool
+//
+// Paths are relative to their site's origin, so '/' exists once per site. Slugs
+// are global ids (stable across the split: they are the pre-split paths without
+// slashes, which is what the apex 301 map in deploy/nginx.conf relies on).
 //
 // Pure data (no React, no browser APIs) so it can be consumed from the Vite
 // config / prerender plugin (Node), the pure prerendered components, and the
 // client apps alike without import cycles.
 //
 // Adding a tool = add an entry here (status 'soon' keeps it off every page until it ships), create
-// <path>/index.html + src/tools/<slug>/main.tsx, and map the path in
-// src/site/prerenderPages.tsx. Vite inputs, <head> tags, sitemap, landing-page
-// cards and breadcrumbs all derive from this file.
+// sites/<site>/<path>/index.html + src/tools/<slug>/main.tsx, and map the slug in
+// src/site/prerenderPages.tsx if it isn't a plain ToolStatic page. Vite inputs,
+// <head> tags, sitemap, landing-page cards and breadcrumbs all derive from this file.
 
-export const SITE_ORIGIN = 'https://chraegames.cloud';
-export const SITE_NAME = 'Chrae Lab';
+/** Registrable domain. The bare apex only redirects now (deploy/nginx.conf) and serves the storage bridge. */
+export const ROOT_DOMAIN = 'chraegames.cloud';
+export const LEGACY_ORIGIN = `https://${ROOT_DOMAIN}`;
+/** Umbrella brand: publisher in JSON-LD, "More from Chrae Lab" links. */
+export const BRAND_NAME = 'Chrae Lab';
 /** Public source repository — linked from every footer and the Organization JSON-LD. */
 export const SITE_REPO = 'https://github.com/chraegames/chrae-lab';
+
+export type SiteId = 'fire' | 'games' | 'tools';
+
+export interface Site {
+  id: SiteId;
+  /** https://<sub>.chraegames.cloud, no trailing slash. */
+  origin: string;
+  /** Brand shown in headers, crumbs, footers and og:site_name. */
+  name: string;
+  /** Label for the link back to this site's home from inside it ("All games"). */
+  homeLabel: string;
+}
+
+export const SITES: Record<SiteId, Site> = {
+  fire: { id: 'fire', origin: `https://fire.${ROOT_DOMAIN}`, name: 'FIRE Planner', homeLabel: 'Open the planner' },
+  games: { id: 'games', origin: `https://games.${ROOT_DOMAIN}`, name: 'Chrae Games', homeLabel: 'All games' },
+  tools: { id: 'tools', origin: `https://tools.${ROOT_DOMAIN}`, name: 'Chrae Tools', homeLabel: 'All tools' },
+};
+
+export const SITE_IDS: SiteId[] = ['fire', 'tools', 'games'];
+
+export function isSiteId(value: unknown): value is SiteId {
+  return typeof value === 'string' && (SITE_IDS as string[]).includes(value);
+}
 
 export type CategoryId = 'finance' | 'utilities' | 'productivity' | 'games';
 
@@ -62,9 +97,11 @@ export interface ToolAbout {
 }
 
 export interface SiteEntry {
-  /** Path-derived id without slashes: '', 'fire-planner', 'fire-planner/how-it-works'. */
+  /** Global id = the pre-split path without slashes: 'fire-planner', 'fire-planner/how-it-works', 'games' (landing). */
   slug: string;
-  /** Absolute path with trailing slash: '/', '/fire-planner/', … */
+  /** Which subdomain serves the page. */
+  site: SiteId;
+  /** Path on that site, with trailing slash: '/', '/sudoku/', '/how-it-works/'. */
   path: string;
   kind: PageKind;
   status: PageStatus;
@@ -76,7 +113,7 @@ export interface SiteEntry {
   title: string;
   /** <meta name="description"> */
   description: string;
-  /** Apps only: which landing-page section the card belongs to. */
+  /** Apps only: which landing-page section the card belongs to (games site → 'games', tools site → utilities/productivity). */
   category?: CategoryId;
   /** Content pages only: slug of the parent app; scopes "Related" links + breadcrumbs. */
   area?: string;
@@ -102,42 +139,12 @@ const SEARCH_VERIFICATION = {
 };
 
 export const PAGES: SiteEntry[] = [
-  {
-    slug: '',
-    path: '/',
-    kind: 'hub',
-    status: 'live',
-    name: SITE_NAME,
-    tagline: 'Small tools that run in your browser.',
-    title: 'Chrae Lab — free tools that run in your browser',
-    description:
-      'Small, free, private tools that run entirely in your browser: a retirement planner, unit converter, calculator, to-do list, TV buying guide and more. No accounts, no tracking.',
-    verification: SEARCH_VERIFICATION,
-    updated: '2026-09-03',
-    jsonLd: [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: SITE_NAME,
-        url: `${SITE_ORIGIN}/`,
-        description:
-          'Small, free, private tools that run entirely in your browser: a retirement planner, unit converter, calculator, to-do list, TV buying guide and more. No accounts, no tracking.',
-        inLanguage: 'en',
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'Organization',
-        name: SITE_NAME,
-        url: `${SITE_ORIGIN}/`,
-        logo: `${SITE_ORIGIN}/icon-512.png`,
-        sameAs: [SITE_REPO],
-      },
-    ],
-  },
+  // ─── fire.chraegames.cloud ──────────────────────────────────────────────
   {
     slug: 'fire-planner',
     updated: '2026-08-21',
-    path: '/fire-planner/',
+    site: 'fire',
+    path: '/',
     kind: 'app',
     status: 'live',
     category: 'finance',
@@ -151,7 +158,7 @@ export const PAGES: SiteEntry[] = [
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         name: 'FIRE Planner',
-        url: `${SITE_ORIGIN}/fire-planner/`,
+        url: `${SITES.fire.origin}/`,
         applicationCategory: 'FinanceApplication',
         operatingSystem: 'Any (web browser)',
         browserRequirements: 'Requires JavaScript',
@@ -193,7 +200,8 @@ export const PAGES: SiteEntry[] = [
   {
     slug: 'fire-planner/coast-fire-calculator',
     updated: '2026-08-21',
-    path: '/fire-planner/coast-fire-calculator/',
+    site: 'fire',
+    path: '/coast-fire-calculator/',
     kind: 'content',
     status: 'live',
     area: 'fire-planner',
@@ -208,7 +216,8 @@ export const PAGES: SiteEntry[] = [
   {
     slug: 'fire-planner/4-percent-rule',
     updated: '2026-08-21',
-    path: '/fire-planner/4-percent-rule/',
+    site: 'fire',
+    path: '/4-percent-rule/',
     kind: 'content',
     status: 'live',
     area: 'fire-planner',
@@ -223,7 +232,8 @@ export const PAGES: SiteEntry[] = [
   {
     slug: 'fire-planner/retirement-withdrawal-strategy',
     updated: '2026-08-21',
-    path: '/fire-planner/retirement-withdrawal-strategy/',
+    site: 'fire',
+    path: '/retirement-withdrawal-strategy/',
     kind: 'content',
     status: 'live',
     area: 'fire-planner',
@@ -238,7 +248,8 @@ export const PAGES: SiteEntry[] = [
   {
     slug: 'fire-planner/how-it-works',
     updated: '2026-08-21',
-    path: '/fire-planner/how-it-works/',
+    site: 'fire',
+    path: '/how-it-works/',
     kind: 'content',
     status: 'live',
     area: 'fire-planner',
@@ -250,8 +261,36 @@ export const PAGES: SiteEntry[] = [
       'What FIRE Planner models, the tax assumptions it uses (2026 MFJ, illustrative), and what it deliberately leaves out. An honest look under the hood.',
     ogType: 'article',
   },
+  // ─── tools.chraegames.cloud ─────────────────────────────────────────────
+  {
+    slug: 'tools',
+    site: 'tools',
+    path: '/',
+    kind: 'hub',
+    status: 'live',
+    name: SITES.tools.name,
+    tagline: 'Small tools that run in your browser.',
+    title: 'Chrae Tools — free tools that run in your browser',
+    description:
+      'Free, private tools that run entirely in your browser: a unit converter, a scientific calculator, a to-do list and a TV buying guide. No accounts, no ads, nothing sent to a server.',
+    verification: SEARCH_VERIFICATION,
+    updated: '2026-10-05',
+    jsonLd: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: SITES.tools.name,
+        url: `${SITES.tools.origin}/`,
+        description:
+          'Free, private tools that run entirely in your browser: a unit converter, a scientific calculator, a to-do list and a TV buying guide. No accounts, no ads, nothing sent to a server.',
+        inLanguage: 'en',
+        publisher: { '@type': 'Organization', name: BRAND_NAME, sameAs: [SITE_REPO] },
+      },
+    ],
+  },
   {
     slug: 'unit-converter',
+    site: 'tools',
     path: '/unit-converter/',
     kind: 'app',
     status: 'live',
@@ -294,6 +333,7 @@ export const PAGES: SiteEntry[] = [
   },
   {
     slug: 'calculator',
+    site: 'tools',
     path: '/calculator/',
     kind: 'app',
     status: 'live',
@@ -337,6 +377,7 @@ export const PAGES: SiteEntry[] = [
   },
   {
     slug: 'todo',
+    site: 'tools',
     path: '/todo/',
     kind: 'app',
     status: 'live',
@@ -377,8 +418,36 @@ export const PAGES: SiteEntry[] = [
       ],
     },
   },
+  // ─── games.chraegames.cloud ─────────────────────────────────────────────
+  {
+    slug: 'games',
+    site: 'games',
+    path: '/',
+    kind: 'hub',
+    status: 'live',
+    name: SITES.games.name,
+    tagline: 'Quick games that play in your browser.',
+    title: 'Chrae Games — free browser games, no download',
+    description:
+      'Free browser games with no download, no account and no ads: Sudoku, a bingo caller, online Go, the Magic Tower puzzle RPG and a 3D city builder. Progress saves on your device.',
+    verification: SEARCH_VERIFICATION,
+    updated: '2026-10-05',
+    jsonLd: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: SITES.games.name,
+        url: `${SITES.games.origin}/`,
+        description:
+          'Free browser games with no download, no account and no ads: Sudoku, a bingo caller, online Go, the Magic Tower puzzle RPG and a 3D city builder. Progress saves on your device.',
+        inLanguage: 'en',
+        publisher: { '@type': 'Organization', name: BRAND_NAME, sameAs: [SITE_REPO] },
+      },
+    ],
+  },
   {
     slug: 'sudoku',
+    site: 'games',
     path: '/sudoku/',
     kind: 'app',
     status: 'live',
@@ -426,6 +495,7 @@ export const PAGES: SiteEntry[] = [
   },
   {
     slug: 'bingo',
+    site: 'games',
     path: '/bingo/',
     kind: 'app',
     status: 'live',
@@ -478,6 +548,7 @@ export const PAGES: SiteEntry[] = [
   },
   {
     slug: 'go',
+    site: 'games',
     path: '/go/',
     kind: 'app',
     status: 'live',
@@ -530,6 +601,7 @@ export const PAGES: SiteEntry[] = [
   },
   {
     slug: 'magic-tower',
+    site: 'games',
     path: '/magic-tower/',
     kind: 'app',
     status: 'live',
@@ -578,6 +650,7 @@ export const PAGES: SiteEntry[] = [
   },
   {
     slug: 'city',
+    site: 'games',
     path: '/city/',
     kind: 'app',
     status: 'live',
@@ -633,6 +706,7 @@ export const PAGES: SiteEntry[] = [
   // src/tools/tv-guide/data.ts (data.test.ts enforces the lockstep).
   {
     slug: 'tv-guide',
+    site: 'tools',
     path: '/tv-guide/',
     kind: 'app',
     status: 'live',
@@ -685,6 +759,7 @@ export const PAGES: SiteEntry[] = [
   },
   {
     slug: 'tv-guide/technologies',
+    site: 'tools',
     path: '/tv-guide/technologies/',
     kind: 'content',
     status: 'live',
@@ -704,16 +779,17 @@ export const PAGES: SiteEntry[] = [
         headline: 'TV panel technologies explained — LCD, QLED, Mini-LED, RGB Mini-LED, OLED & QD-OLED',
         description:
           'How every 2026 TV panel works, layer by layer, with animated diagrams, pros and cons, and what each is best for.',
-        url: `${SITE_ORIGIN}/tv-guide/technologies/`,
+        url: `${SITES.tools.origin}/tv-guide/technologies/`,
         datePublished: '2026-08-26',
         dateModified: '2026-08-26',
-        author: { '@type': 'Organization', name: SITE_NAME },
-        publisher: { '@type': 'Organization', name: SITE_NAME },
+        author: { '@type': 'Organization', name: BRAND_NAME },
+        publisher: { '@type': 'Organization', name: BRAND_NAME },
       },
     ],
   },
   {
     slug: 'tv-guide/brands',
+    site: 'tools',
     path: '/tv-guide/brands/',
     kind: 'content',
     status: 'live',
@@ -733,16 +809,17 @@ export const PAGES: SiteEntry[] = [
         headline: 'TV brand names decoded — what each manufacturer\'s marketing name really means',
         description:
           'Brand by brand, each TV marketing name mapped to the real panel technology behind it.',
-        url: `${SITE_ORIGIN}/tv-guide/brands/`,
+        url: `${SITES.tools.origin}/tv-guide/brands/`,
         datePublished: '2026-08-26',
         dateModified: '2026-08-26',
-        author: { '@type': 'Organization', name: SITE_NAME },
-        publisher: { '@type': 'Organization', name: SITE_NAME },
+        author: { '@type': 'Organization', name: BRAND_NAME },
+        publisher: { '@type': 'Organization', name: BRAND_NAME },
       },
     ],
   },
   {
     slug: 'tv-guide/decoder',
+    site: 'tools',
     path: '/tv-guide/decoder/',
     kind: 'content',
     status: 'live',
@@ -757,6 +834,7 @@ export const PAGES: SiteEntry[] = [
   },
   {
     slug: 'tv-guide/compare',
+    site: 'tools',
     path: '/tv-guide/compare/',
     kind: 'content',
     status: 'live',
@@ -771,58 +849,88 @@ export const PAGES: SiteEntry[] = [
   },
 ];
 
-export const HUB = PAGES[0];
+export function siteOf(entry: SiteEntry): Site {
+  return SITES[entry.site];
+}
 
-export function livePages(): SiteEntry[] {
-  return PAGES.filter(p => p.status === 'live');
+/** The page served at a site's '/': the FIRE planner itself, or the games / tools landing. */
+export function siteHome(site: SiteId): SiteEntry {
+  return PAGES.find(p => p.site === site && p.path === '/')!;
+}
+
+export function livePages(site?: SiteId): SiteEntry[] {
+  return PAGES.filter(p => p.status === 'live' && (!site || p.site === site));
 }
 
 /** Live apps, in manifest order. */
-export function liveTools(): SiteEntry[] {
-  return PAGES.filter(p => p.kind === 'app' && p.status === 'live');
+export function liveTools(site?: SiteId): SiteEntry[] {
+  return livePages(site).filter(p => p.kind === 'app');
 }
 
 /** Live content guides, in manifest order. */
-export function contentPages(): SiteEntry[] {
-  return PAGES.filter(p => p.kind === 'content' && p.status === 'live');
+export function contentPages(site?: SiteId): SiteEntry[] {
+  return livePages(site).filter(p => p.kind === 'content');
 }
 
-/** Other live tools for "More tools" links: same category first, then the rest in manifest order. */
+/**
+ * Other live tools on the same site for "More …" links: same category first,
+ * then the rest in manifest order. Never crosses sites — the other sites are
+ * linked once, by their home page (otherSites).
+ */
 export function relatedTools(entry: SiteEntry): SiteEntry[] {
-  const others = liveTools().filter(t => t.slug !== entry.slug);
+  const others = liveTools(entry.site).filter(t => t.slug !== entry.slug);
   return [
     ...others.filter(t => t.category === entry.category),
     ...others.filter(t => t.category !== entry.category),
   ];
 }
 
-/** Live apps in a category (the hub shows no placeholders for unshipped tools). */
+/** Home pages of the other two sites, for the "More from Chrae Lab" links. */
+export function otherSites(site: SiteId): SiteEntry[] {
+  return SITE_IDS.filter(id => id !== site).map(siteHome);
+}
+
+/** Live apps in a category (landings show no placeholders for unshipped tools). */
 export function toolsIn(category: CategoryId): SiteEntry[] {
   return liveTools().filter(p => p.category === category);
 }
 
-export function byPath(path: string): SiteEntry | undefined {
-  return PAGES.find(p => p.path === path);
+export function byPath(site: SiteId, path: string): SiteEntry | undefined {
+  return PAGES.find(p => p.site === site && p.path === path);
 }
 
-/** Resolves a slug to its path; throws at build/test time on a typo. */
-export function pathFor(slug: string): string {
+/** Resolves a slug to its entry; throws at build/test time on a typo. */
+export function bySlug(slug: string): SiteEntry {
   const entry = PAGES.find(p => p.slug === slug);
   if (!entry) throw new Error(`Unknown page slug: ${slug}`);
-  return entry.path;
+  return entry;
 }
 
-/** Hub → parent app (content pages) → the page itself. */
+/** Path of a slug on its own site. */
+export function pathFor(slug: string): string {
+  return bySlug(slug).path;
+}
+
+/** Site home → parent app (content pages) → the page itself, without repeats (the FIRE home is both). */
 export function breadcrumbs(entry: SiteEntry): SiteEntry[] {
-  const trail: SiteEntry[] = [HUB];
+  const trail: SiteEntry[] = [siteHome(entry.site)];
   if (entry.area) {
     const parent = PAGES.find(p => p.slug === entry.area);
-    if (parent) trail.push(parent);
+    if (parent && !trail.includes(parent)) trail.push(parent);
   }
-  if (entry.kind !== 'hub') trail.push(entry);
+  if (!trail.includes(entry)) trail.push(entry);
   return trail;
 }
 
-export function absoluteUrl(path: string): string {
-  return `${SITE_ORIGIN}${path}`;
+export function siteUrl(site: SiteId, path: string): string {
+  return `${SITES[site].origin}${path}`;
+}
+
+export function absoluteUrl(entry: SiteEntry): string {
+  return siteUrl(entry.site, entry.path);
+}
+
+/** Link to `to` from a page on `from`: a relative path on the same site, else an absolute URL. */
+export function hrefFor(to: SiteEntry, from: SiteId): string {
+  return to.site === from ? to.path : absoluteUrl(to);
 }

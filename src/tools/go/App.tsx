@@ -4,7 +4,7 @@ import { Button } from '../../components/primitives/Button';
 import { Icon } from '../../components/primitives/Icon';
 import { ConfirmDialog } from '../../components/storyline/ConfirmDialog';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { byPath } from '../../site/manifest';
+import { bySlug } from '../../site/manifest';
 import { track } from '../../utils/analytics';
 import { secureRandomInt } from '../bingo/bingo';
 import { Board } from './Board';
@@ -34,7 +34,7 @@ import {
 import { createTransport, wantsLocalTransport, type Transport } from './net';
 import { GO_STYLES } from './styles';
 
-const entry = byPath('/go/')!;
+const entry = bySlug('go');
 
 // ─── Styles ─────────────────────────────────────────────────────────────
 

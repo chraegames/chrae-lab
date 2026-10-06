@@ -5,7 +5,7 @@ import { Icon } from '../../components/primitives/Icon';
 import { Popover, PopoverItem, PopoverLabel } from '../../components/primitives/Popover';
 import { ConfirmDialog } from '../../components/storyline/ConfirmDialog';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { byPath } from '../../site/manifest';
+import { bySlug } from '../../site/manifest';
 import { track } from '../../utils/analytics';
 import {
   formatTime,
@@ -20,7 +20,7 @@ import {
 } from './game';
 import { DIFFICULTIES, boxOf, colOf, digitCounts, findConflicts, rowOf, type Difficulty } from './sudoku';
 
-const entry = byPath('/sudoku/')!;
+const entry = bySlug('sudoku');
 
 const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   easy: 'Easy',

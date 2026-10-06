@@ -5,7 +5,7 @@ import { Icon } from '../../components/primitives/Icon';
 import { Popover, PopoverItem, PopoverLabel } from '../../components/primitives/Popover';
 import { ConfirmDialog } from '../../components/storyline/ConfirmDialog';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { byPath } from '../../site/manifest';
+import { bySlug } from '../../site/manifest';
 import { track } from '../../utils/analytics';
 import {
   AUTO_INTERVALS,
@@ -32,7 +32,7 @@ import {
   type VariantId,
 } from './bingo';
 
-const entry = byPath('/bingo/')!;
+const entry = bySlug('bingo');
 
 // ─── Styles ─────────────────────────────────────────────────────────────
 

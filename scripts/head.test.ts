@@ -1,59 +1,68 @@
 import { describe, it, expect } from 'vitest';
 import { ANTI_FLASH_STYLE, THEME_BOOT_SCRIPT, buildHeadTags } from './head';
-import { HUB, SITE_ORIGIN, SITE_REPO, byPath } from '../src/site/manifest';
+import { SITES, SITE_REPO, bySlug, siteHome } from '../src/site/manifest';
 import { THEME_KEY } from '../src/utils/persistence';
 
 function find(tags: ReturnType<typeof buildHeadTags>, pred: (t: (typeof tags)[number]) => boolean) {
   return tags.filter(pred);
 }
 
+function ld(slug: string) {
+  return find(buildHeadTags(bySlug(slug)), t => t.attrs?.type === 'application/ld+json').map(t => JSON.parse(t.children!));
+}
+
 describe('buildHeadTags', () => {
-  it('emits canonical + og:url equal to SITE_ORIGIN + path', () => {
-    const entry = byPath('/fire-planner/how-it-works/')!;
+  it('emits canonical + og:url on the page\'s own subdomain', () => {
+    const entry = bySlug('fire-planner/how-it-works');
     const tags = buildHeadTags(entry);
     const canonical = find(tags, t => t.tag === 'link' && t.attrs?.rel === 'canonical')[0];
-    expect(canonical.attrs?.href).toBe(`${SITE_ORIGIN}/fire-planner/how-it-works/`);
+    expect(canonical.attrs?.href).toBe('https://fire.chraegames.cloud/how-it-works/');
     const ogUrl = find(tags, t => t.attrs?.property === 'og:url')[0];
-    expect(ogUrl.attrs?.content).toBe(`${SITE_ORIGIN}/fire-planner/how-it-works/`);
+    expect(ogUrl.attrs?.content).toBe('https://fire.chraegames.cloud/how-it-works/');
     expect(find(tags, t => t.tag === 'title')[0].children).toBe(entry.title);
+    expect(find(tags, t => t.attrs?.property === 'og:site_name')[0].attrs?.content).toBe('FIRE Planner');
+    expect(find(tags, t => t.attrs?.property === 'og:image')[0].attrs?.content).toBe('https://fire.chraegames.cloud/og.png');
+
+    const sudoku = buildHeadTags(bySlug('sudoku'));
+    expect(find(sudoku, t => t.attrs?.rel === 'canonical')[0].attrs?.href).toBe('https://games.chraegames.cloud/sudoku/');
+    expect(find(sudoku, t => t.attrs?.property === 'og:site_name')[0].attrs?.content).toBe('Chrae Games');
   });
 
-  it('hub has WebSite + Organization + ItemList but no BreadcrumbList; content pages get a three-level trail', () => {
-    const hubLd = find(buildHeadTags(HUB), t => t.attrs?.type === 'application/ld+json').map(t =>
-      JSON.parse(t.children!),
-    );
-    expect(hubLd.map(b => b['@type']).sort()).toEqual(['ItemList', 'Organization', 'WebSite']);
-    expect(hubLd.find(b => b['@type'] === 'Organization').sameAs).toEqual([SITE_REPO]);
-    const list = hubLd.find(b => b['@type'] === 'ItemList');
+  it('landings have WebSite + ItemList of their own apps and no BreadcrumbList', () => {
+    const games = ld('games');
+    expect(games.map(b => b['@type']).sort()).toEqual(['ItemList', 'WebSite']);
+    expect(games.find(b => b['@type'] === 'WebSite').publisher.sameAs).toEqual([SITE_REPO]);
+    const list = games.find(b => b['@type'] === 'ItemList');
     expect(list.itemListElement.map((i: { name: string }) => i.name)).toContain('Sudoku');
-    expect(list.itemListElement[0].url).toBe(`${SITE_ORIGIN}/fire-planner/`);
+    expect(list.itemListElement.map((i: { name: string }) => i.name)).not.toContain('Calculator');
+    expect(list.itemListElement[0].url).toBe(`${SITES.games.origin}/sudoku/`);
 
-    const ld = find(
-      buildHeadTags(byPath('/fire-planner/how-it-works/')!),
-      t => t.attrs?.type === 'application/ld+json',
-    );
-    expect(ld).toHaveLength(1);
-    const crumbs = JSON.parse(ld[0].children!);
-    expect(crumbs['@type']).toBe('BreadcrumbList');
-    expect(crumbs.itemListElement.map((i: { name: string }) => i.name)).toEqual([
-      'Chrae Lab',
-      'FIRE Planner',
-      'How it works',
-    ]);
-    expect(crumbs.itemListElement[2].item).toBe(`${SITE_ORIGIN}/fire-planner/how-it-works/`);
+    const tools = ld('tools');
+    const toolList = tools.find(b => b['@type'] === 'ItemList');
+    expect(toolList.itemListElement.map((i: { name: string }) => i.name)).toContain('Calculator');
+    expect(toolList.itemListElement.map((i: { name: string }) => i.name)).not.toContain('FIRE Planner');
+    expect(find(buildHeadTags(siteHome('tools')), t => t.attrs?.name === 'google-site-verification')).toHaveLength(1);
   });
 
-  it('FIRE home carries breadcrumb + WebApplication + FAQPage and the verification metas', () => {
-    const tags = buildHeadTags(byPath('/fire-planner/')!);
-    const types = find(tags, t => t.attrs?.type === 'application/ld+json').map(
-      t => JSON.parse(t.children!)['@type'],
-    );
-    expect(types).toEqual(['BreadcrumbList', 'WebApplication', 'FAQPage']);
+  it('FIRE content pages get a two-level trail on the fire origin', () => {
+    const blocks = ld('fire-planner/how-it-works');
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]['@type']).toBe('BreadcrumbList');
+    expect(blocks[0].itemListElement.map((i: { name: string }) => i.name)).toEqual(['FIRE Planner', 'How it works']);
+    expect(blocks[0].itemListElement[0].item).toBe('https://fire.chraegames.cloud/');
+    expect(blocks[0].itemListElement[1].item).toBe('https://fire.chraegames.cloud/how-it-works/');
+  });
+
+  it('FIRE home carries WebApplication + FAQPage (no one-item trail) and the verification metas', () => {
+    const tags = buildHeadTags(bySlug('fire-planner'));
+    const blocks = ld('fire-planner');
+    expect(blocks.map(b => b['@type'])).toEqual(['WebApplication', 'FAQPage']);
+    expect(blocks[0].url).toBe('https://fire.chraegames.cloud/');
     expect(find(tags, t => t.attrs?.name === 'google-site-verification')).toHaveLength(1);
   });
 
   it('prepends the theme boot script, keyed on the shared THEME_KEY', () => {
-    const tags = buildHeadTags(HUB);
+    const tags = buildHeadTags(siteHome('games'));
     expect(tags[0].injectTo).toBe('head-prepend');
     expect(tags[0].children).toBe(THEME_BOOT_SCRIPT);
     expect(THEME_BOOT_SCRIPT).toContain(`'${THEME_KEY}'`);
@@ -64,32 +73,33 @@ describe('buildHeadTags', () => {
   });
 
   it('tool pages derive WebApplication + FAQPage from their About copy', () => {
-    const entry = byPath('/sudoku/')!;
-    const blocks = find(buildHeadTags(entry), t => t.attrs?.type === 'application/ld+json').map(t =>
-      JSON.parse(t.children!),
-    );
+    const entry = bySlug('sudoku');
+    const blocks = ld('sudoku');
     expect(blocks.map(b => b['@type'])).toEqual(['BreadcrumbList', 'WebApplication', 'FAQPage']);
+    expect(blocks[0].itemListElement.map((i: { name: string }) => i.name)).toEqual(['Chrae Games', 'Sudoku']);
     expect(blocks[1].applicationCategory).toBe('GameApplication');
-    expect(blocks[1].url).toBe(`${SITE_ORIGIN}/sudoku/`);
+    expect(blocks[1].url).toBe(`${SITES.games.origin}/sudoku/`);
     expect(blocks[2].mainEntity.map((q: { name: string }) => q.name)).toEqual(entry.about!.faq.map(f => f.q));
     expect(blocks[2].mainEntity[0].acceptedAnswer.text).toBe(entry.about!.faq[0].a);
   });
 
   it('TV guide: the parent app derives WebApplication + FAQPage; chapters carry a dated Article', () => {
-    const app = buildHeadTags(byPath('/tv-guide/')!);
-    expect(find(app, t => t.attrs?.type === 'application/ld+json').map(t => JSON.parse(t.children!)['@type'])).toEqual([
-      'BreadcrumbList',
-      'WebApplication',
-      'FAQPage',
-    ]);
-    const tech = byPath('/tv-guide/technologies/')!;
-    const blocks = find(buildHeadTags(tech), t => t.attrs?.type === 'application/ld+json').map(t => JSON.parse(t.children!));
+    expect(ld('tv-guide').map(b => b['@type'])).toEqual(['BreadcrumbList', 'WebApplication', 'FAQPage']);
+    const tech = bySlug('tv-guide/technologies');
+    const blocks = ld('tv-guide/technologies');
     expect(blocks.map(b => b['@type'])).toEqual(['BreadcrumbList', 'Article']);
-    expect(blocks[0].itemListElement.map((i: { name: string }) => i.name)).toEqual(['Chrae Lab', 'TV buying guide', 'TV technologies explained']);
+    expect(blocks[0].itemListElement.map((i: { name: string }) => i.name)).toEqual(['Chrae Tools', 'TV buying guide', 'TV technologies explained']);
     expect(blocks[1].dateModified).toBe(tech.updated);
-    expect(blocks[1].url).toBe(`${SITE_ORIGIN}/tv-guide/technologies/`);
+    expect(blocks[1].url).toBe(`${SITES.tools.origin}/tv-guide/technologies/`);
     expect(find(buildHeadTags(tech), t => t.attrs?.property === 'og:type')[0].attrs?.content).toBe('article');
-    const decoder = find(buildHeadTags(byPath('/tv-guide/decoder/')!), t => t.attrs?.type === 'application/ld+json');
-    expect(decoder).toHaveLength(1);
+    expect(ld('tv-guide/decoder')).toHaveLength(1);
+  });
+
+  it('no tag anywhere points at the bare apex or the old fireplan host', () => {
+    for (const slug of ['games', 'tools', 'fire-planner', 'sudoku', 'tv-guide/brands', 'fire-planner/4-percent-rule']) {
+      const text = JSON.stringify(buildHeadTags(bySlug(slug)));
+      expect(text, slug).not.toMatch(/https:\/\/(www\.)?chraegames\.cloud/);
+      expect(text, slug).not.toContain('fireplan.');
+    }
   });
 });

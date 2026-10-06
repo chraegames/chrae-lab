@@ -1,16 +1,32 @@
-// The Chrae Lab landing page. PURE: no hooks, no browser APIs — it is rendered
-// to a static string at build time and shipped without React. The only
-// behaviour on the page (theme toggle) is wired up by src/hub/main.ts.
+// The landing page of the games and tools sites (`<Landing site="games" />`).
+// PURE: no hooks, no browser APIs — it is rendered to a static string at build
+// time and shipped without React. The only behaviour on the page (theme toggle,
+// one-time storage import) is wired up by src/hub/main.ts, which reads the
+// site from the root's data-site attribute.
 //
 // Layout follows the Design/v3 "Night Console" handoff: header with a mono
 // category nav, two-column hero with a CSS motif, one section per category
 // (fixed column counts so no row ends on an empty cell), a sunken Guides band
-// and a two-column footer. Styling is a `hub-*` class block + inline tokens;
+// (only when the site has guides), an "Also from Chrae Lab" row linking the other
+// two sites, and a two-column footer. Styling is a `hub-*` class block + inline tokens;
 // every card, chip and row is a plain <a>.
 
 import type { CSSProperties } from 'react';
-import { CATEGORIES, HUB, SITE_NAME, SITE_REPO, contentPages, liveTools, toolsIn, type SiteEntry } from '../site/manifest';
-import { categoryVar } from '../site/accent';
+import {
+  BRAND_NAME,
+  CATEGORIES,
+  SITES,
+  SITE_REPO,
+  contentPages,
+  hrefFor,
+  liveTools,
+  otherSites,
+  siteHome,
+  type CategoryId,
+  type SiteEntry,
+  type SiteId,
+} from '../site/manifest';
+import { accentFor, categoryVar } from '../site/accent';
 
 const HUB_STYLES = `
 .hub{max-width:1240px;margin:0 auto;padding:0 var(--page-pad-x)}
@@ -150,6 +166,14 @@ function HubIcon({ slug }: { slug: string }) {
           </span>
         </span>
       );
+    case 'go':
+      // a black and a white stone
+      return (
+        <span className="hub-tile" style={{ gap: 3 }}>
+          <span style={{ width: 13, height: 13, borderRadius: '50%', background: 'currentColor', display: 'block' }} />
+          <span style={{ width: 13, height: 13, borderRadius: '50%', boxShadow: 'inset 0 0 0 1.5px currentColor', display: 'block' }} />
+        </span>
+      );
     case 'magic-tower':
       return (
         <span className="hub-tile" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 6px)', gridAutoRows: 6, gap: 2, alignContent: 'center', justifyContent: 'center' }}>
@@ -168,17 +192,36 @@ function HubIcon({ slug }: { slug: string }) {
           <span style={bar('30%', { width: 6, opacity: 0.7 })} />
         </span>
       );
+    case 'games':
+      // a d-pad
+      return (
+        <span className="hub-tile" style={{ position: 'relative' }}>
+          <span style={{ position: 'absolute', width: 7, height: 21, background: 'currentColor', borderRadius: 1.5, display: 'block' }} />
+          <span style={{ position: 'absolute', width: 21, height: 7, background: 'currentColor', borderRadius: 1.5, display: 'block' }} />
+        </span>
+      );
+    case 'tools':
+      // a ruler
+      return (
+        <span className="hub-tile">
+          <span style={{ width: 24, height: 10, borderRadius: 2, boxShadow: 'inset 0 0 0 1.5px currentColor', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-evenly', padding: '0 2px' }}>
+            {[5, 3, 5, 3, 5].map((h, i) => (
+              <span key={i} style={{ width: 1.5, height: h, background: 'currentColor', display: 'block' }} />
+            ))}
+          </span>
+        </span>
+      );
     default:
       return <span className="hub-tile" />;
   }
 }
 
-function ToolCard({ entry, index, row }: { entry: SiteEntry; index: number; row: boolean }) {
+function ToolCard({ entry, href, index, row }: { entry: SiteEntry; href: string; index?: number; row: boolean }) {
   return (
-    <a href={entry.path} className={row ? 'hub-card hub-card-row' : 'hub-card'}>
+    <a href={href} className={row ? 'hub-card hub-card-row' : 'hub-card'}>
       <div className="hub-card-meta">
         <HubIcon slug={entry.slug} />
-        <span className="hub-idx">{String(index).padStart(2, '0')}</span>
+        {index !== undefined && <span className="hub-idx">{String(index).padStart(2, '0')}</span>}
       </div>
       <div>
         <h3>{entry.name}</h3>
@@ -188,12 +231,28 @@ function ToolCard({ entry, index, row }: { entry: SiteEntry; index: number; row:
   );
 }
 
-/** Live content pages grouped under their parent app, in manifest order. */
-function guideGroups(): { parent: SiteEntry; pages: SiteEntry[] }[] {
-  return liveTools()
-    .map(parent => ({ parent, pages: contentPages().filter(g => g.area === parent.slug) }))
+/** The site's live content pages grouped under their parent app, in manifest order. */
+function guideGroups(site: SiteId): { parent: SiteEntry; pages: SiteEntry[] }[] {
+  return liveTools(site)
+    .map(parent => ({ parent, pages: contentPages(site).filter(g => g.area === parent.slug) }))
     .filter(g => g.pages.length > 0);
 }
+
+/** Per-site hero copy; titles/descriptions live in the manifest. */
+const COPY: Record<'games' | 'tools', { eyebrow: string; sub: string; intro: string }> = {
+  tools: {
+    eyebrow: 'Free · Private · No accounts',
+    sub: 'Free, private, no accounts — everything stays on your device.',
+    intro:
+      'Chrae Tools is a collection of free online tools: a unit converter, a scientific calculator, a to-do list and a TV buying guide. Each one runs entirely in your browser — no sign-up, no ads, and nothing sent to a server.',
+  },
+  games: {
+    eyebrow: 'Free · No download · No ads',
+    sub: 'Open a tab and play. Progress saves on your device.',
+    intro:
+      'Chrae Games is a shelf of free browser games: Sudoku with notes and hints, a bingo number caller, online Go against a friend, the Magic Tower puzzle RPG and a 3D city builder. Nothing to install, no account, and saves stay in your browser.',
+  },
+};
 
 /** Split the tagline so its closing clause can be set in italic accent. */
 function Headline({ text }: { text: string }) {
@@ -207,26 +266,36 @@ function Headline({ text }: { text: string }) {
   );
 }
 
-export function Landing() {
-  const categories = CATEGORIES.filter(cat => toolsIn(cat.id).length > 0);
+export function Landing({ site }: { site: 'games' | 'tools' }) {
+  const home = siteHome(site);
+  const name = SITES[site].name;
+  const copy = COPY[site];
+  const tools = liveTools(site);
+  const toolsOf = (category: CategoryId) => tools.filter(t => t.category === category);
+  const categories = CATEGORIES.filter(cat => toolsOf(cat.id).length > 0);
+  const guides = guideGroups(site);
+  const others = otherSites(site);
   // Cards are numbered 01..N in display order (category order, then manifest order).
-  const indexOf = new Map(categories.flatMap(cat => toolsIn(cat.id)).map((t, i) => [t.slug, i + 1]));
+  const indexOf = new Map(categories.flatMap(cat => toolsOf(cat.id)).map((t, i) => [t.slug, i + 1]));
+  const [motifA, motifB = motifA] = categories.map(c => c.id);
   return (
-    <div className="hub">
+    <div className="hub" data-site={site} style={accentFor(site === 'games' ? 'games' : 'utilities')}>
       <style>{HUB_STYLES}</style>
 
       <header className="hub-top">
-        <a href={HUB.path} style={{ display: 'flex', alignItems: 'center', gap: 11, color: 'inherit' }}>
+        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 11, color: 'inherit' }}>
           <span style={{ width: 22, height: 22, borderRadius: 3, background: 'var(--accent)', display: 'block' }} aria-hidden="true" />
-          <span style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink)' }}>{SITE_NAME}</span>
+          <span style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--ink)' }}>{name}</span>
         </a>
         <nav className="hub-nav" aria-label="Sections">
-            {categories.map(cat => (
-              <a key={cat.id} href={`#${cat.id}`}>
-                {cat.name}
-              </a>
-            ))}
-            <a href="#guides">Guides</a>
+            {categories.length > 1 &&
+              categories.map(cat => (
+                <a key={cat.id} href={`#${cat.id}`}>
+                  {cat.name}
+                </a>
+              ))}
+            {guides.length > 0 && <a href="#guides">Guides</a>}
+            <a href="#more">More from {BRAND_NAME}</a>
         </nav>
         <button
             type="button"
@@ -268,32 +337,30 @@ export function Landing() {
               marginBottom: 26,
             }}
           >
-            Free · Private · No accounts
+            {copy.eyebrow}
           </div>
           <h1 className="hub-h1">
-            <Headline text={HUB.tagline} />
+            <Headline text={home.tagline} />
           </h1>
           <p style={{ fontSize: 20, lineHeight: 1.45, color: 'var(--ink-2)', margin: 0, maxWidth: '34ch' }}>
-            Free, private, no accounts — everything stays on your device.
+            {copy.sub}
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div className="hub-motif" aria-hidden="true">
-            <span style={{ position: 'absolute', left: 34, top: 34, width: 72, height: 72, borderRadius: '50%', background: categoryVar('finance'), display: 'block' }} />
-            <span className="hub-motif-b" style={{ position: 'absolute', left: 78, top: 58, width: 72, height: 72, borderRadius: '50%', background: categoryVar('utilities'), display: 'block' }} />
-            <span style={{ position: 'absolute', right: 26, bottom: 26, width: 52, height: 52, borderRadius: 3, boxShadow: `inset 0 0 0 1px ${categoryVar('games')}`, display: 'block' }} />
+            <span style={{ position: 'absolute', left: 34, top: 34, width: 72, height: 72, borderRadius: '50%', background: categoryVar(motifA), display: 'block' }} />
+            <span className="hub-motif-b" style={{ position: 'absolute', left: 78, top: 58, width: 72, height: 72, borderRadius: '50%', background: categoryVar(motifB), display: 'block' }} />
+            <span style={{ position: 'absolute', right: 26, bottom: 26, width: 52, height: 52, borderRadius: 3, boxShadow: `inset 0 0 0 1px ${categoryVar(site === 'games' ? 'utilities' : 'games')}`, display: 'block' }} />
           </div>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, lineHeight: 1.75, color: 'var(--ink-3)', margin: 0 }}>
-            {SITE_NAME} is a collection of free online tools: a retirement (FIRE) planner, a unit converter, a
-            scientific calculator, a to-do list, Sudoku puzzles, a bingo number caller and a TV buying guide. Each one runs entirely in your browser —
-            no sign-up, no ads, and nothing sent to a server.
+            {copy.intro}
           </p>
         </div>
       </section>
 
       {categories.map(cat => {
-        const tools = toolsIn(cat.id);
-        const cols = tools.length === 1 ? 1 : tools.length === 2 ? 2 : 3;
+        const inCat = toolsOf(cat.id);
+        const cols = inCat.length === 1 ? 1 : inCat.length === 2 ? 2 : 3;
         const accent = { '--hub-accent': categoryVar(cat.id) } as CSSProperties;
         return (
           <section key={cat.id} id={cat.id} className="hub-section" style={accent}>
@@ -303,21 +370,22 @@ export function Landing() {
               <p>{cat.blurb}</p>
             </div>
             <div className={`hub-grid hub-grid-${cols}`}>
-              {tools.map(t => (
-                <ToolCard key={t.slug} entry={t} index={indexOf.get(t.slug) ?? 0} row={tools.length === 1} />
+              {inCat.map(t => (
+                <ToolCard key={t.slug} entry={t} href={t.path} index={indexOf.get(t.slug) ?? 0} row={inCat.length === 1} />
               ))}
             </div>
           </section>
         );
       })}
 
+      {guides.length > 0 && (
       <section id="guides" className="hub-guides" aria-labelledby="hub-guides">
         <div className="hub-sec-head">
           <h2 id="hub-guides">Guides</h2>
           <p>Short reads that go with the tools — no app needed.</p>
         </div>
         <div className="hub-guide-cols">
-          {guideGroups().map(({ parent, pages }) => {
+          {guides.map(({ parent, pages }) => {
             const stacked = pages.some(g => g.tagline.length > 40);
             return (
               <div key={parent.slug} className={stacked ? 'hub-guide-stack' : 'hub-guide-cols-2col'}>
@@ -339,26 +407,46 @@ export function Landing() {
           })}
         </div>
       </section>
+      )}
+
+      <section id="more" className="hub-section hub-more" aria-labelledby="hub-more">
+        <div className="hub-sec-head">
+          <h2 id="hub-more">More from {BRAND_NAME}</h2>
+          <p>Our other sites — same idea, everything runs on your device.</p>
+        </div>
+        <div className="hub-grid hub-grid-2">
+          {others.map(o => (
+            <div key={o.slug} style={{ display: 'contents', ...({ '--hub-accent': categoryVar(o.site === 'fire' ? 'finance' : o.site === 'games' ? 'games' : 'utilities') } as CSSProperties) }}>
+              <ToolCard entry={o} href={hrefFor(o, site)} row={false} />
+            </div>
+          ))}
+        </div>
+      </section>
 
       <footer className="hub-foot">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 14 }}>
             <span style={{ width: 18, height: 18, borderRadius: 3, background: 'var(--accent)', display: 'block' }} aria-hidden="true" />
-            <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}>{SITE_NAME}</span>
+            <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}>{name}</span>
           </div>
           <p className="hub-legal">
-            Educational tools — not financial advice.
+            Free, with no accounts and no ads — everything runs in your browser.
             <br />
             Analytics are cookie-less and self-hosted.
             <br />
             Open source: <a href={SITE_REPO}>view the code on GitHub</a>.
           </p>
         </div>
-        <nav aria-label="All tools">
+        <nav aria-label={SITES[site].homeLabel}>
           <ul>
-            {liveTools().map(t => (
+            {tools.map(t => (
               <li key={t.slug}>
                 <a href={t.path}>{t.name}</a>
+              </li>
+            ))}
+            {others.map(o => (
+              <li key={o.slug}>
+                <a href={hrefFor(o, site)}>{o.name}</a>
               </li>
             ))}
           </ul>

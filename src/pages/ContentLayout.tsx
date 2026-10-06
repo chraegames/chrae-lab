@@ -6,7 +6,7 @@
 
 import type { CSSProperties, ReactNode } from 'react';
 import { CONTENT_ROUTES, FIRE_HOME_PATH } from './routeMeta';
-import { SITE_NAME, SITE_REPO } from '../site/manifest';
+import { SITE_REPO } from '../site/manifest';
 
 export { H2, P, UL, LI, A } from '../site/Prose';
 import { linkStyle } from '../site/proseStyles';
@@ -37,6 +37,7 @@ interface ContentLayoutProps {
 
 export function ContentLayout({ slug, title, lede, children }: ContentLayoutProps) {
   const related = CONTENT_ROUTES.filter(r => r.slug !== slug);
+  const current = CONTENT_ROUTES.find(r => r.slug === slug);
   return (
     <div
       style={{
@@ -50,15 +51,15 @@ export function ContentLayout({ slug, title, lede, children }: ContentLayoutProp
       }}
     >
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <a href="/" style={crumbStyle}>
-          {SITE_NAME}
+        <a href={FIRE_HOME_PATH} style={crumbStyle}>
+          FIRE Planner
         </a>
         <span aria-hidden="true" style={{ ...crumbStyle, color: 'var(--ink-slash)' }}>
           /
         </span>
-        <a href={FIRE_HOME_PATH} style={crumbStyle}>
-          FIRE Planner
-        </a>
+        <span aria-current="page" style={{ ...crumbStyle, color: 'var(--ink-2)' }}>
+          {current?.label}
+        </span>
       </nav>
 
       <header style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

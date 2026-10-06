@@ -56,11 +56,11 @@ export function CoastFireContent() {
         FIRE Planner runs the whole projection in your browser. Set your current
         balances, expected return, and the year you'd like to stop contributing, and
         watch whether the portfolio coasts to your target — or where it falls short.
-        It's <A href="/fire-planner/">free, private, and requires no signup</A>; your numbers never
+        It's <A href="/">free, private, and requires no signup</A>; your numbers never
         leave your device.
       </P>
       <P>
-        Related reading: the <A href="/fire-planner/4-percent-rule/">4% rule and safe withdrawal
+        Related reading: the <A href="/4-percent-rule/">4% rule and safe withdrawal
         rates</A> covers how much that nest egg can actually pay out once you're there.
       </P>
     </ContentLayout>

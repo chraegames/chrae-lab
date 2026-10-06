@@ -17,7 +17,7 @@ import { Popover, PopoverDivider, PopoverItem } from '../../components/primitive
 import { ConfirmDialog } from '../../components/storyline/ConfirmDialog';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { generateId } from '../../engine/defaults';
-import { byPath } from '../../site/manifest';
+import { bySlug } from '../../site/manifest';
 import { track } from '../../utils/analytics';
 import { dueStatus, formatDue, todayISO, type DueStatus } from './dueDate';
 import {
@@ -29,7 +29,7 @@ import {
   type TodoList,
 } from './todoReducer';
 
-const entry = byPath('/todo/')!;
+const entry = bySlug('todo');
 
 type Dispatch = (action: TodoAction) => void;
 

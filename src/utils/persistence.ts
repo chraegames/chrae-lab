@@ -28,9 +28,9 @@ export const MAGIC_TOWER_META_KEY = 'chraeLab.magicTower.meta';
 export const MAGIC_TOWER_LANG_KEY = 'chraeLab.magicTower.lang';
 export const CITY_KEY = 'chraeLab.city';
 export const CITY_PREFS_KEY = 'chraeLab.city.prefs';
-const OLD_SCENARIOS_KEY = 'financial-planner-scenarios';
-const OLD_INPUT_KEY = 'financial-planner-input';
-const OLD_PLANS_KEY = 'financial-planner-plans';
+export const OLD_SCENARIOS_KEY = 'financial-planner-scenarios';
+export const OLD_INPUT_KEY = 'financial-planner-input';
+export const OLD_PLANS_KEY = 'financial-planner-plans';
 
 // Safe wrapper around localStorage.setItem. Returns false if the write
 // throws (quota exceeded, storage disabled, Safari private mode in some

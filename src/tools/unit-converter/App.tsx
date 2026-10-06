@@ -3,13 +3,13 @@ import { ToolShell } from '../../components/layout/ToolShell';
 import { Button } from '../../components/primitives/Button';
 import { TextInput } from '../../components/primitives/Input';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { byPath } from '../../site/manifest';
+import { bySlug } from '../../site/manifest';
 import { track } from '../../utils/analytics';
 import { formatResult, parseInput } from './format';
 import { defaultSelection, loadSelection, saveSelection, type Selection } from './storage';
 import { convert, getCategory, getUnit, UNIT_CATEGORIES, type CategoryId } from './units';
 
-const entry = byPath('/unit-converter/')!;
+const entry = bySlug('unit-converter');
 
 const selectStyle: CSSProperties = {
   height: 36,

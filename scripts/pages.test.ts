@@ -1,14 +1,39 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { livePages } from '../src/site/manifest';
+import { existsSync, readdirSync, statSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { livePages, SITE_IDS } from '../src/site/manifest';
+
+const SITES_DIR = resolve(__dirname, '..', 'sites');
 
 // The Vite input map is generated from the manifest, so a live entry without a
 // matching index.html would only fail at build time. Catch it in tests instead.
 describe('live pages have an html entry on disk', () => {
   for (const p of livePages()) {
-    it(p.path, () => {
-      expect(existsSync(resolve(__dirname, '..', p.path.slice(1), 'index.html'))).toBe(true);
+    it(`${p.site}${p.path}`, () => {
+      expect(existsSync(join(SITES_DIR, p.site, p.path.slice(1), 'index.html'))).toBe(true);
     });
   }
+});
+
+function htmlFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap(name => {
+    const full = join(dir, name);
+    if (statSync(full).isDirectory()) return htmlFiles(full);
+    return name === 'index.html' ? [full] : [];
+  });
+}
+
+describe('no stray html entries', () => {
+  it('every sites/<site>/**/index.html belongs to a live page of that site', () => {
+    for (const site of SITE_IDS) {
+      const expected = new Set(livePages(site).map(p => join(SITES_DIR, site, p.path.slice(1), 'index.html')));
+      for (const file of htmlFiles(join(SITES_DIR, site))) expect(expected.has(file), file).toBe(true);
+    }
+  });
+
+  it('the old single-origin entries are gone from the repo root', () => {
+    for (const old of ['index.html', 'fire-planner/index.html', 'sudoku/index.html', 'tv-guide/index.html']) {
+      expect(existsSync(resolve(__dirname, '..', old)), old).toBe(false);
+    }
+  });
 });

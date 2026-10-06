@@ -1,25 +1,31 @@
 # Chrae Lab
 
-A collection of small, free tools that run entirely in the browser —
-no accounts, no server, everything stored on your device. Live at
-**[chraegames.cloud](https://chraegames.cloud)**.
+A collection of small, free tools and games that run entirely in the browser —
+no accounts, no server, everything stored on your device. Three sites, built
+from this one repo:
 
-| Category     | Tool | Live |
-|--------------|------|------|
-| Finance      | **FIRE Planner** — retirement / FIRE projection with US federal tax, three account types and a withdrawal optimizer | [chraegames.cloud/fire-planner/](https://chraegames.cloud/fire-planner/) |
-| Finance      | Guides: [Coast FIRE calculator](https://chraegames.cloud/fire-planner/coast-fire-calculator/) · [The 4% rule](https://chraegames.cloud/fire-planner/4-percent-rule/) · [Retirement withdrawal strategy](https://chraegames.cloud/fire-planner/retirement-withdrawal-strategy/) · [How the planner works](https://chraegames.cloud/fire-planner/how-it-works/) | |
-| Utilities    | Unit converter (length, weight, volume, area, speed, temperature) | [chraegames.cloud/unit-converter/](https://chraegames.cloud/unit-converter/) |
-| Utilities    | Calculator (basic + scientific, history) | [chraegames.cloud/calculator/](https://chraegames.cloud/calculator/) |
-| Utilities    | TV buying guide — 2026 panel technologies with animated diagrams, brand-name decoder, comparison, "help me choose" | [chraegames.cloud/tv-guide/](https://chraegames.cloud/tv-guide/) · [Technologies](https://chraegames.cloud/tv-guide/technologies/) · [Brands](https://chraegames.cloud/tv-guide/brands/) · [Decoder](https://chraegames.cloud/tv-guide/decoder/) · [Compare](https://chraegames.cloud/tv-guide/compare/) |
-| Productivity | To-do list (multiple lists, due dates) | [chraegames.cloud/todo/](https://chraegames.cloud/todo/) |
-| Games        | Sudoku (easy–expert, notes, hints, undo) | [chraegames.cloud/sudoku/](https://chraegames.cloud/sudoku/) |
-| Games        | Bingo caller (75/90/30-ball, flashboard, history, auto-call, voice) | [chraegames.cloud/bingo/](https://chraegames.cloud/bingo/) |
-| Games        | Go — two-player online Go (quick match or room code, 9×9/13×13/19×19, peer-to-peer over WebRTC) | [chraegames.cloud/go/](https://chraegames.cloud/go/) |
-| Games        | Magic Tower 魔塔 — seeded puzzle-RPG, ten loops × 99 generated floors | [chraegames.cloud/magic-tower/](https://chraegames.cloud/magic-tower/) |
-| Games        | City — 3D SimCity-style city builder with a per-tile statistical simulation | [chraegames.cloud/city/](https://chraegames.cloud/city/) |
+- **[fire.chraegames.cloud](https://fire.chraegames.cloud/)** — the FIRE retirement planner and its guides
+- **[games.chraegames.cloud](https://games.chraegames.cloud/)** — browser games
+- **[tools.chraegames.cloud](https://tools.chraegames.cloud/)** — everyday tools
 
-Every page is its own static HTML entry (Vite multi-page); the hub landing
-page and the FIRE content guides are prerendered at build time, and each
+(The old `chraegames.cloud` address 301-redirects every page to its new home.)
+
+| Site  | Tool | Live |
+|-------|------|------|
+| fire  | **FIRE Planner** — retirement / FIRE projection with US federal tax, three account types and a withdrawal optimizer | [fire.chraegames.cloud](https://fire.chraegames.cloud/) |
+| fire  | Guides: [Coast FIRE calculator](https://fire.chraegames.cloud/coast-fire-calculator/) · [The 4% rule](https://fire.chraegames.cloud/4-percent-rule/) · [Retirement withdrawal strategy](https://fire.chraegames.cloud/retirement-withdrawal-strategy/) · [How the planner works](https://fire.chraegames.cloud/how-it-works/) | |
+| tools | Unit converter (length, weight, volume, area, speed, temperature) | [/unit-converter/](https://tools.chraegames.cloud/unit-converter/) |
+| tools | Calculator (basic + scientific, history) | [/calculator/](https://tools.chraegames.cloud/calculator/) |
+| tools | TV buying guide — 2026 panel technologies with animated diagrams, brand-name decoder, comparison, "help me choose" | [/tv-guide/](https://tools.chraegames.cloud/tv-guide/) · [Technologies](https://tools.chraegames.cloud/tv-guide/technologies/) · [Brands](https://tools.chraegames.cloud/tv-guide/brands/) · [Decoder](https://tools.chraegames.cloud/tv-guide/decoder/) · [Compare](https://tools.chraegames.cloud/tv-guide/compare/) |
+| tools | To-do list (multiple lists, due dates) | [/todo/](https://tools.chraegames.cloud/todo/) |
+| games | Sudoku (easy–expert, notes, hints, undo) | [/sudoku/](https://games.chraegames.cloud/sudoku/) |
+| games | Bingo caller (75/90/30-ball, flashboard, history, auto-call, voice) | [/bingo/](https://games.chraegames.cloud/bingo/) |
+| games | Go — two-player online Go (quick match or room code, 9×9/13×13/19×19, peer-to-peer over WebRTC) | [/go/](https://games.chraegames.cloud/go/) |
+| games | Magic Tower 魔塔 — seeded puzzle-RPG, ten loops × 99 generated floors | [/magic-tower/](https://games.chraegames.cloud/magic-tower/) |
+| games | City — 3D SimCity-style city builder with a per-tile statistical simulation | [/city/](https://games.chraegames.cloud/city/) |
+
+Every page is its own static HTML entry (Vite multi-page, one build per
+site); the landing pages and the FIRE content guides are prerendered at build time, and each
 tool mounts its own small React root. See `CLAUDE.md` for the architecture
 and `DEPLOY.md` for hosting.
 
@@ -61,21 +67,24 @@ A Tower of the Sorcerer / 魔塔 puzzle-RPG at `/magic-tower/`: ten playthroughs
 
 ```bash
 npm install
-npm run dev      # local dev server (Vite)
+npm run dev      # FIRE site dev server (also dev:games, dev:tools)
 npm test         # unit tests (Vitest)
 npm run lint     # ESLint
-npm run build    # type-check + production build → dist/
+npm run build    # type-check + all three sites → dist/{fire,games,tools} (+ dist/legacy)
 ```
 
 ## Deploying
 
-The build output (`dist/`) is a static site; any static-file host works.
+Each of `dist/fire`, `dist/games` and `dist/tools` is a self-contained static
+site for its subdomain; `dist/legacy` is what the old apex still serves (the
+storage bridge). `deploy/nginx.conf` serves all of them from one container —
+see `DEPLOY.md`. On a generic static host, point each subdomain at its folder.
 
 ### Cloudflare Pages
 
 1. Push the repo to GitHub.
 2. In the Cloudflare dashboard: **Pages → Create application → Connect to Git**.
-3. Build settings: build command `npm run build`, output directory `dist`.
+3. Build settings: build command `npm run build`, output directory `dist/<site>` — one Pages project per site.
 4. Save. Subsequent pushes to `main` auto-deploy.
 
 ### Netlify

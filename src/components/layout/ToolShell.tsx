@@ -1,6 +1,6 @@
-// Shared chrome for every Chrae Lab tool page: sticky header with the hub
+// Shared chrome for every games/tools page: sticky header with the site-home
 // crumb + tool name + theme toggle, a centred content column, and a footer.
-// Tools render <ToolShell entry={byPath('/calculator/')!}>…</ToolShell>.
+// Tools render <ToolShell entry={bySlug('calculator')}>…</ToolShell>.
 
 import type { ReactNode } from 'react';
 import { Button } from '../primitives/Button';
@@ -8,7 +8,7 @@ import { Icon } from '../primitives/Icon';
 import { useTheme } from '../../hooks/useTheme';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { isLocalHost } from '../../utils/env';
-import { SITE_NAME, SITE_REPO, type SiteEntry } from '../../site/manifest';
+import { SITE_REPO, siteOf, type SiteEntry } from '../../site/manifest';
 import { ToolAbout } from '../../site/ToolAbout';
 import { accentFor } from '../../site/accent';
 
@@ -59,7 +59,7 @@ export function ToolShell({ entry, children, rightSlot, maxWidth = 760, layout =
               whiteSpace: 'nowrap',
             }}
           >
-            {SITE_NAME}
+            {siteOf(entry).name}
           </a>
           <span aria-hidden="true" style={{ color: local ? '#b45309' : 'var(--ink-slash)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
             /
@@ -130,7 +130,7 @@ export function ToolShell({ entry, children, rightSlot, maxWidth = 760, layout =
           color: 'var(--ink-3)',
         }}
       >
-        <span>{SITE_NAME}</span>
+        <span>{siteOf(entry).name}</span>
         <span>Runs entirely in your browser.</span>
         <a href={SITE_REPO} style={{ color: 'var(--ink-2)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
           Source on GitHub

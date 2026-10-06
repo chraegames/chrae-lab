@@ -2,7 +2,7 @@
 // createRoot().render() replaces it on mount (never hydrated). Gives crawlers
 // and no-JS visitors the tool's name + description instead of an empty div.
 
-import { SITE_NAME, SITE_REPO, type SiteEntry } from './manifest';
+import { SITE_REPO, siteOf, type SiteEntry } from './manifest';
 import { ToolAbout } from './ToolAbout';
 import { accentFor } from './accent';
 
@@ -28,7 +28,7 @@ export function ToolStatic({ entry }: { entry: SiteEntry }) {
             textDecoration: 'none',
           }}
         >
-          {SITE_NAME}
+          {siteOf(entry).name}
         </a>
         <h1
           style={{

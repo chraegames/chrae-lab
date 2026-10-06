@@ -8,7 +8,7 @@ import { ConfirmDialog } from '../storyline/ConfirmDialog';
 import type { Profile, ProfilesState } from '../../models/types';
 import { isLocalHost } from '../../utils/env';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { SITE_NAME } from '../../site/manifest';
+import { absoluteUrl, otherSites } from '../../site/manifest';
 
 interface AppBarProps {
   profilesState: ProfilesState;
@@ -76,24 +76,6 @@ export function AppBar({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 20, minWidth: 0 }}>
-        {!isMobile && (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-            <a
-              href="/"
-              title={`Back to ${SITE_NAME}`}
-              style={{
-                color: local ? '#1c1917' : 'var(--ink-3)',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {SITE_NAME}
-            </a>
-            <span aria-hidden="true" style={{ color: local ? '#b45309' : 'var(--ink-slash)' }}>
-              /
-            </span>
-          </span>
-        )}
         <button
           onClick={onGoPlan}
           style={{ display: 'flex', alignItems: 'center', gap: 9 }}
@@ -365,12 +347,15 @@ function AppBarMobileMenu({
           >
             About
           </PopoverItem>
-          <PopoverItem
-            leading={<Icon name="grid" size={12} />}
-            onClick={() => { window.location.assign('/'); }}
-          >
-            {SITE_NAME} home
-          </PopoverItem>
+          {otherSites('fire').map(site => (
+            <PopoverItem
+              key={site.slug}
+              leading={<Icon name="grid" size={12} />}
+              onClick={() => { window.location.assign(absoluteUrl(site)); }}
+            >
+              {site.name}
+            </PopoverItem>
+          ))}
         </>
       )}
     </Popover>

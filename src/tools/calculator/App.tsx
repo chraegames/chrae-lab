@@ -3,12 +3,12 @@ import { ToolShell } from '../../components/layout/ToolShell';
 import { Button } from '../../components/primitives/Button';
 import { Icon } from '../../components/primitives/Icon';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { byPath } from '../../site/manifest';
+import { bySlug } from '../../site/manifest';
 import { track } from '../../utils/analytics';
 import { evaluate, formatResult, type AngleMode } from './evaluate';
 import { loadHistory, pushHistory, saveHistory, type HistoryItem } from './history';
 
-const entry = byPath('/calculator/')!;
+const entry = bySlug('calculator');
 
 type Mode = 'basic' | 'scientific';
 type KeyTone = 'digit' | 'op' | 'fn' | 'equals' | 'clear';

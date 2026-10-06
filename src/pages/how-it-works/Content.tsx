@@ -62,11 +62,11 @@ export function HowItWorksContent() {
 
       <H2>Try it</H2>
       <P>
-        <A href="/fire-planner/">Open the planner</A> and build a scenario in a couple of minutes —
+        <A href="/">Open the planner</A> and build a scenario in a couple of minutes —
         free, private, no signup. To dig into specific concepts, see{' '}
-        <A href="/fire-planner/4-percent-rule/">the 4% rule</A>,{' '}
-        <A href="/fire-planner/retirement-withdrawal-strategy/">withdrawal strategy</A>, or{' '}
-        <A href="/fire-planner/coast-fire-calculator/">Coast FIRE</A>.
+        <A href="/4-percent-rule/">the 4% rule</A>,{' '}
+        <A href="/retirement-withdrawal-strategy/">withdrawal strategy</A>, or{' '}
+        <A href="/coast-fire-calculator/">Coast FIRE</A>.
       </P>
     </ContentLayout>
   );

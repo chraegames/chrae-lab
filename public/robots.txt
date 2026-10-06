@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://chraegames.cloud/sitemap.xml

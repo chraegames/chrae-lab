@@ -1,6 +1,6 @@
 # Deploying Chrae Lab (fin_plan) to a Hostinger VPS (Traefik + Docker)
 
-A pure client-side React/Vite SPA — no backend, no env vars, no secrets, all state in `localStorage`. `npm run build` outputs static files to `dist/`.
+Three static sites built from one repo — no backend, no secrets, all state in `localStorage`. `npm run build` outputs `dist/fire`, `dist/games`, `dist/tools` (one per subdomain) and `dist/legacy` (what the old apex still serves). One nginx container serves all of them, choosing by `Host` (`deploy/nginx.conf`).
 
 This VPS was provisioned from Hostinger's **Traefik** application template, so it already has Docker running and Traefik handling :80/:443 + automatic Let's Encrypt. We deploy by running a tiny `nginx:alpine` container alongside Traefik, with the built `dist/` directory bind-mounted in. Per-deploy work is just `npm run build` + `rsync`.
 
@@ -45,18 +45,19 @@ PermitRootLogin no
 Apply: `sudo systemctl restart ssh`. **Keep the original root session open while you verify the new `deploy` user can SSH in** — don't lock yourself out.
 
 ### A.3 DNS first (before starting the container)
-Traefik will request a Let's Encrypt cert on first start, which only works if your domain already resolves to the VPS. Add an `A` record:
+Traefik requests a Let's Encrypt cert for every host on first start, which only works if each name already resolves to the VPS. `A` records:
 
-| Type | Name     | Value      | Serves                                   |
-|------|----------|------------|------------------------------------------|
-| A    | @        | <VPS_IP>   | `chraegames.cloud` — the Chrae Lab hub    |
-| A    | www      | <VPS_IP>   | 301 → apex                                |
-| A    | fireplan | <VPS_IP>   | legacy; 301 → `chraegames.cloud/fire-planner/…` |
-| A    | stats    | <VPS_IP>   | Umami (Part D)                            |
+| Type | Name     | Value      | Serves                                                    |
+|------|----------|------------|-----------------------------------------------------------|
+| A    | fire     | <VPS_IP>   | `fire.chraegames.cloud` — FIRE planner + guides           |
+| A    | games    | <VPS_IP>   | `games.chraegames.cloud` — games landing + games          |
+| A    | tools    | <VPS_IP>   | `tools.chraegames.cloud` — tools landing + tools          |
+| A    | @        | <VPS_IP>   | `chraegames.cloud` — 301s every page + the storage bridge |
+| A    | www      | <VPS_IP>   | 301s, same as the apex                                     |
+| A    | fireplan | <VPS_IP>   | legacy; 301 → `fire.chraegames.cloud/…`                   |
+| A    | stats    | <VPS_IP>   | Umami (Part D)                                             |
 
-(Or use Hostinger's default hostname `srv1479830.hstgr.cloud` if you don't have your own domain yet — it should already resolve.)
-
-Wait for propagation: `dig chraegames.cloud +short` should return the VPS IP. Keep the `fireplan` record for as long as you want the old links to keep working — Traefik needs it to resolve to issue the cert for the redirect router.
+Wait for propagation: `dig fire.chraegames.cloud +short` (and games, tools) should return the VPS IP. **Keep `@`, `www` and `fireplan` for good**: they carry the redirects and the apex also serves `/migrate.html`, which the new sites use once per browser to copy over saved data (see Part F).
 
 ### A.4 Project directory on the VPS
 As the `deploy` user:
@@ -81,93 +82,26 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.fin_plan.loadbalancer.server.port=80"
-
-      # Hub: apex + www, with www permanently redirected to the apex.
-      - "traefik.http.routers.hub.rule=Host(`chraegames.cloud`) || Host(`www.chraegames.cloud`)"
-      - "traefik.http.routers.hub.entrypoints=websecure"
-      - "traefik.http.routers.hub.tls=true"
-      - "traefik.http.routers.hub.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.hub.middlewares=www-to-apex"
-      - "traefik.http.middlewares.www-to-apex.redirectregex.regex=^https?://www\\.chraegames\\.cloud/(.*)"
-      - "traefik.http.middlewares.www-to-apex.redirectregex.replacement=https://chraegames.cloud/$${1}"
-      - "traefik.http.middlewares.www-to-apex.redirectregex.permanent=true"
-
-      # Legacy planner host: path-preserving 301 into the hub's /fire-planner/ area.
-      - "traefik.http.routers.fireplan_legacy.rule=Host(`fireplan.chraegames.cloud`)"
-      - "traefik.http.routers.fireplan_legacy.entrypoints=websecure"
-      - "traefik.http.routers.fireplan_legacy.tls=true"
-      - "traefik.http.routers.fireplan_legacy.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.fireplan_legacy.middlewares=fireplan-to-hub"
-      - "traefik.http.middlewares.fireplan-to-hub.redirectregex.regex=^https?://fireplan\\.chraegames\\.cloud/(.*)"
-      - "traefik.http.middlewares.fireplan-to-hub.redirectregex.replacement=https://chraegames.cloud/fire-planner/$${1}"
-      - "traefik.http.middlewares.fireplan-to-hub.redirectregex.permanent=true"
+      # Every host goes to this container; nginx picks the site (or the 301) by Host.
+      - "traefik.http.routers.chrae.rule=Host(`fire.chraegames.cloud`) || Host(`games.chraegames.cloud`) || Host(`tools.chraegames.cloud`) || Host(`chraegames.cloud`) || Host(`www.chraegames.cloud`) || Host(`fireplan.chraegames.cloud`)"
+      - "traefik.http.routers.chrae.entrypoints=websecure"
+      - "traefik.http.routers.chrae.tls=true"
+      - "traefik.http.routers.chrae.tls.certresolver=letsencrypt"
 ```
 
 Notes:
-- `$${1}` is Compose's escape for a literal `${1}` — Traefik sees `${1}`.
-- Both regexes are anchored on their own host, so a request that already hits `chraegames.cloud` never matches a redirect — no loops.
+- All redirects now live in nginx (`deploy/nginx.conf`), so there are no Traefik redirect middlewares any more. If you are upgrading from the single-site setup, delete the old `hub` / `fireplan_legacy` routers and the `www-to-apex` / `fireplan-to-hub` middlewares — leaving them would 301 the apex to itself instead of to the new sites.
 - Labels only take effect on container (re)creation: `docker compose up -d` after editing.
 - Traefik's existing config auto-redirects HTTP→HTTPS, so you don't need a separate router for :80.
 
 ### A.6 `nginx.conf`
-Create `/opt/fin_plan/nginx.conf`:
+Copy the repo's `deploy/nginx.conf` to `/opt/fin_plan/nginx.conf` (it is the source of truth — `scripts/nginx.test.ts` replays every pre-split URL through its redirect map):
 
-```nginx
-server {
-    listen 80;
-    server_name _;
-    root /usr/share/nginx/html;
-    index index.html;
-
-    # Directory redirects (/fire-planner → /fire-planner/) must stay relative;
-    # nginx sits behind Traefik and doesn't know the public scheme/host.
-    absolute_redirect off;
-
-    # Vite hashes asset filenames → cache them forever
-    location /assets/ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        try_files $uri =404;
-    }
-
-    # /some/page/index.html is the same document as /some/page/ — collapse
-    # the duplicate so crawlers only ever see the canonical form. This must
-    # test $request_uri (what the client asked for): the `index` directive
-    # internally re-requests /page/index.html, and a `location` regex would
-    # match that internal request too and 301 every page to itself.
-    if ($request_uri ~ ^([^?]*/)index\.html(\?|$)) {
-        return 301 $1;
-    }
-
-    # index.html and other unhashed files → never cache.
-    # Every page is its own <dir>/index.html (hub, /fire-planner/, each tool),
-    # so $uri/ resolves them. This is a multi-page site, not an SPA: unknown
-    # paths must be a real 404 (serving the hub there is a "soft 404" that
-    # wastes crawl budget and confuses Search Console).
-    location / {
-        add_header Cache-Control "no-cache, must-revalidate";
-        try_files $uri $uri/ =404;
-    }
-    error_page 404 /404.html;
-    location = /404.html {
-        internal;
-        add_header Cache-Control "no-cache, must-revalidate";
-    }
-
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_types
-        text/plain
-        text/css
-        text/xml
-        application/javascript
-        application/json
-        application/manifest+json
-        application/xml+rss
-        image/svg+xml;
-}
+```bash
+scp deploy/nginx.conf deploy@<VPS_IP>:/opt/fin_plan/nginx.conf
 ```
+
+What it does: one server block for `fire.` / `games.` / `tools.` with `root /usr/share/nginx/html/<site>` (immutable `/assets/`, `index.html` → directory 301, real 404s with each site's own `404.html`, gzip); one for the apex / `www` / `fireplan` that 301s everything to the new URL except `/migrate.html` (framable only by the three subdomains) and `/robots.txt`; and a catch-all that drops unknown hosts.
 
 ### A.7 Initial build + first start
 From local:
@@ -176,6 +110,7 @@ cd /Users/hsung/Projects/fin_plan
 npm run build
 rsync -avz --delete dist/ deploy@<VPS_IP>:/opt/fin_plan/dist/
 ```
+(`dist/` holds `fire/`, `games/`, `tools/` and `legacy/`; rsync them together.)
 
 On the VPS:
 ```bash
@@ -374,7 +309,7 @@ Then rebuild and redeploy (Part B). Vite bakes these values into the production 
 **To disable analytics**: leave either var blank in `.env.production` and rebuild — the script is never injected and `track()` calls no-op.
 
 ### D.7 Verify
-- Load `https://chraegames.cloud` → in Umami's **Realtime** view, you should appear within ~30 seconds.
+- Load `https://fire.chraegames.cloud` → in Umami's **Realtime** view, you should appear within ~30 seconds.
 - DevTools → Network: `https://stats.chraegames.cloud/api/send` returns 200 on page load and on each tracked action (preset loaded, plan created, theme toggled, drawer opened, export, import, auto-balance, history opened).
 - DevTools → Application → Cookies: empty for both `chraegames.cloud` and `stats.chraegames.cloud` — Umami is cookie-less by design.
 
@@ -399,7 +334,7 @@ All `track()` calls no-op if `window.umami` isn't loaded (script blocked, dev se
 
 ---
 
-## Part E — The hub migration (fireplan.chraegames.cloud → chraegames.cloud)
+## Part E — The hub migration (fireplan.chraegames.cloud → chraegames.cloud) — superseded by Part F
 
 The site became the **Chrae Lab** hub: the root is a landing page listing tools, and the FIRE planner moved to `/fire-planner/`. The code side is done (`SITE_ORIGIN` in `src/site/manifest.ts`, canonicals, sitemap, robots, webmanifest all point at `https://chraegames.cloud`). The ops side, in order:
 
@@ -417,6 +352,40 @@ The site became the **Chrae Lab** hub: the root is a landing page listing tools,
 5. **Umami** — Settings → Websites → edit the existing website and change its domain to `chraegames.cloud`. Keep the same website ID (`.env.production` is unchanged), so history stays in one report; tool usage is separated by page path (`/fire-planner/…`, `/calculator/`, …) in the Pages view.
 6. **Google Search Console** — add a *Domain* property for `chraegames.cloud` (DNS TXT verification; it covers apex, www and fireplan). Submit `https://chraegames.cloud/sitemap.xml`. In the old `fireplan.chraegames.cloud` property run **Change of Address** → `chraegames.cloud`. The `google-site-verification` meta tag is still emitted on the hub and FIRE home from the manifest, so the old URL-prefix property keeps verifying too.
 7. **Bing Webmaster Tools** — add `chraegames.cloud` (import from Search Console, or use the `msvalidate.01` meta that's already on the hub page) and submit the sitemap.
+
+## Part F — The three-site split (chraegames.cloud → fire. / games. / tools.)
+
+The single hub was split so each audience gets its own site (and its own sitemap, Search Console property and topical focus). Old URL → new URL:
+
+| Old | New |
+|-----|-----|
+| `chraegames.cloud/` (hub) | `tools.chraegames.cloud/` |
+| `chraegames.cloud/fire-planner/…` | `fire.chraegames.cloud/…` |
+| `chraegames.cloud/{sudoku,bingo,go,magic-tower,city}/` | `games.chraegames.cloud/<same>/` |
+| `chraegames.cloud/{unit-converter,calculator,todo,tv-guide/…}/` | `tools.chraegames.cloud/<same>/` |
+| `fireplan.chraegames.cloud/…` | `fire.chraegames.cloud/…` |
+
+**Saved data.** `localStorage` is per origin, so the new sites start empty. On a visitor's first load, each site opens `https://chraegames.cloud/migrate.html` in a hidden iframe, asks for its own keys, copies any it doesn't have yet, and never asks again (`src/site/legacyStorage.ts`, `legacy/migrate.html`). That is why the apex must keep resolving and serving `/migrate.html` for at least several months.
+
+Cut-over, in order:
+
+1. **DNS** — add `fire`, `games`, `tools` A records (A.3). Keep `@`, `www`, `fireplan`, `stats`. Wait until all three resolve.
+2. **nginx + Traefik** — copy `deploy/nginx.conf` (A.6), replace the compose labels with A.5, then `docker compose up -d`. Watch `docker logs traefik-traefik-1 --tail 50` for the new certs.
+3. **Deploy** — `npm run build && rsync -avz --delete dist/ deploy@<VPS_IP>:/opt/fin_plan/dist/`.
+4. **Check**:
+   ```bash
+   for h in fire games tools; do curl -sI https://$h.chraegames.cloud/ | head -1; done     # 200 ×3
+   curl -sI https://chraegames.cloud/fire-planner/how-it-works/ | grep -i location   # → https://fire.chraegames.cloud/how-it-works/
+   curl -sI https://chraegames.cloud/sudoku/ | grep -i location                      # → https://games.chraegames.cloud/sudoku/
+   curl -sI https://chraegames.cloud/ | grep -i location                             # → https://tools.chraegames.cloud/
+   curl -sI https://fireplan.chraegames.cloud/4-percent-rule/ | grep -i location    # → https://fire.chraegames.cloud/4-percent-rule/
+   curl -sI https://chraegames.cloud/migrate.html | grep -i -e '^HTTP' -e frame-ancestors   # 200 + CSP
+   curl -s https://games.chraegames.cloud/sitemap.xml | grep -c '<loc>'              # 6
+   ```
+   Then in a browser that has data on the old site, open `https://chraegames.cloud/fire-planner/` — you should land on `fire.` with your plans.
+5. **Google Search Console** — the existing *Domain* property `chraegames.cloud` already covers every subdomain; additionally add URL-prefix (or Domain) properties for `https://fire.chraegames.cloud`, `https://games.chraegames.cloud` and `https://tools.chraegames.cloud` so each gets its own reports, and submit each site's `/sitemap.xml`. Use **Change of Address** from the old `https://chraegames.cloud` URL-prefix property → `https://fire.chraegames.cloud` (the planner carries most of the traffic; Change of Address takes a single target — the per-page 301s handle games and tools). Remove the old sitemap submission.
+6. **Bing Webmaster Tools** — add the three sites (import from Search Console) and submit their sitemaps.
+7. **Umami** — the same website ID keeps working on all subdomains; pages show up by path, so add a *hostname* filter to tell sites apart, or create one website per site and switch `.env.production` to per-site IDs later.
 
 ## Verification
 

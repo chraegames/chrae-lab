@@ -11,7 +11,7 @@
 // rendered to a string in the Vite build (Node) context. Keep it that way.
 
 import type { ReactNode } from 'react';
-import { HUB, SITE_NAME, SITE_REPO } from '../../site/manifest';
+import { SITE_REPO } from '../../site/manifest';
 import { INTRO_STYLES } from './introStyles';
 
 /** Decorative "projection" bar chart: accumulation in the accent, drawdown in coral. */
@@ -130,8 +130,6 @@ function StaticHeaderRow() {
   return (
     <div className="fire-intro-top">
       <nav className="fire-intro-crumb" aria-label="Breadcrumb">
-        <a href={HUB.path}>{SITE_NAME}</a>
-        <i>/</i>
         <b aria-current="page">FIRE Planner</b>
       </nav>
       <span className="fire-intro-pill">

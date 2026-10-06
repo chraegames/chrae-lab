@@ -1,4 +1,4 @@
-// Maps each manifest path to the PURE component prerendered into its #root at
+// Maps each manifest slug to the PURE component prerendered into its #root at
 // build time. Everything imported here must be free of hooks, browser APIs and
 // CSS imports — it runs under Node via react-dom/server (scripts/prerender.tsx).
 //
@@ -18,7 +18,8 @@ import { HowItWorksContent } from '../pages/how-it-works/Content';
 import { GuideStaticPage } from '../tools/tv-guide/static';
 
 const BY_SLUG: Record<string, ComponentType> = {
-  '': Landing,
+  games: () => <Landing site="games" />,
+  tools: () => <Landing site="tools" />,
   'fire-planner': IntroContent,
   'fire-planner/coast-fire-calculator': CoastFireContent,
   'fire-planner/4-percent-rule': FourPercentContent,

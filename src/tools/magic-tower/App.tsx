@@ -4,7 +4,7 @@ import { Button } from '../../components/primitives/Button';
 import { Icon } from '../../components/primitives/Icon';
 import { ConfirmDialog } from '../../components/storyline/ConfirmDialog';
 import { useIsMobile } from '../../hooks/useIsMobile';
-import { byPath } from '../../site/manifest';
+import { bySlug } from '../../site/manifest';
 import { track } from '../../utils/analytics';
 import { MAGIC_TOWER_LANG_KEY, safeSetItem } from '../../utils/persistence';
 import { Canvas } from './components/Canvas';
@@ -25,7 +25,7 @@ import { MT_STYLES } from './styles';
 import { ZONES, zoneOf, type Dir, type Meta, type PerkId, type Run } from './types';
 import type { Fx } from './render';
 
-const entry = byPath('/magic-tower/')!;
+const entry = bySlug('magic-tower');
 
 type Dialog = null | 'loop' | 'save' | 'load' | 'fly' | 'help' | 'manual' | 'breach';
 

@@ -6,7 +6,7 @@
 // underline tab bar; content column below; About/related links + footer.
 
 import type { ReactNode } from 'react';
-import { HUB, SITE_NAME, SITE_REPO, breadcrumbs, relatedTools, type SiteEntry } from '../../../site/manifest';
+import { SITE_REPO, breadcrumbs, relatedTools, siteOf, type SiteEntry } from '../../../site/manifest';
 import { ToolAbout } from '../../../site/ToolAbout';
 import { accentFor } from '../../../site/accent';
 import { GUIDE_ENTRY, GUIDE_PAGES, type GuidePageId } from '../pages';
@@ -25,6 +25,7 @@ interface GuideShellProps {
 export function GuideShell({ page, entry, children, themeToggle, local = false }: GuideShellProps) {
   const trail = breadcrumbs(entry);
   const related = relatedTools(GUIDE_ENTRY);
+  const site = siteOf(GUIDE_ENTRY);
   return (
     <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', ...accentFor(GUIDE_ENTRY.category) }}>
       <style>{GUIDE_STYLES}</style>
@@ -35,7 +36,7 @@ export function GuideShell({ page, entry, children, themeToggle, local = false }
             <nav aria-label="Breadcrumb" className="tvg-crumb">
               {trail.map((c, i) => {
                 const last = i === trail.length - 1;
-                const label = c.kind === 'hub' ? SITE_NAME : c.label ?? c.name;
+                const label = c.kind === 'hub' ? site.name : c.label ?? c.name;
                 return (
                   <span key={c.slug} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                     {i > 0 && <i aria-hidden="true">/</i>}
@@ -76,7 +77,7 @@ export function GuideShell({ page, entry, children, themeToggle, local = false }
                   color: 'var(--ink-3)',
                 }}
               >
-                More from {HUB.name}
+                More from {site.name}
               </div>
               <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: '8px 22px', fontSize: 15 }}>
                 <li>
@@ -92,8 +93,8 @@ export function GuideShell({ page, entry, children, themeToggle, local = false }
                   </li>
                 ))}
                 <li>
-                  <a href={HUB.path} style={{ color: 'var(--ink-2)' }}>
-                    All tools
+                  <a href="/" style={{ color: 'var(--ink-2)' }}>
+                    {site.homeLabel}
                   </a>
                 </li>
               </ul>
@@ -106,7 +107,7 @@ export function GuideShell({ page, entry, children, themeToggle, local = false }
 
       <div className="tvg-wrap" style={{ paddingTop: 20 }}>
         <footer className="tvg-foot">
-          <span>{SITE_NAME}</span>
+          <span>{site.name}</span>
           <span>Independent and not affiliated with any manufacturer. No models, specifications or prices — only how the technologies work.</span>
           <a href={SITE_REPO}>Source on GitHub</a>
         </footer>

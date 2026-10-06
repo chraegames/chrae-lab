@@ -4,10 +4,11 @@
 // Consumed by the sitePages() plugin in vite.config.ts (Node context).
 
 import {
-  SITE_NAME,
   absoluteUrl,
   breadcrumbs,
   liveTools,
+  siteOf,
+  siteUrl,
   type SiteEntry,
 } from '../src/site/manifest';
 import { THEME_KEY } from '../src/utils/persistence';
@@ -55,7 +56,7 @@ function breadcrumbList(entry: SiteEntry): object {
       '@type': 'ListItem',
       position: i + 1,
       name: crumb.name,
-      item: absoluteUrl(crumb.path),
+      item: absoluteUrl(crumb),
     })),
   };
 }
@@ -68,7 +69,7 @@ function toolJsonLd(entry: SiteEntry): object[] {
       '@context': 'https://schema.org',
       '@type': 'WebApplication',
       name: entry.name,
-      url: absoluteUrl(entry.path),
+      url: absoluteUrl(entry),
       applicationCategory: entry.about.applicationCategory,
       operatingSystem: 'Any (web browser)',
       browserRequirements: 'Requires JavaScript',
@@ -88,30 +89,31 @@ function toolJsonLd(entry: SiteEntry): object[] {
   ];
 }
 
-function toolItemList(): object {
+/** The landing's own apps (never the other sites'). */
+function toolItemList(entry: SiteEntry): object {
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: `${SITE_NAME} tools`,
-    itemListElement: liveTools().map((tool, i) => ({
+    name: entry.site === 'games' ? `${siteOf(entry).name} games` : `${siteOf(entry).name}`,
+    itemListElement: liveTools(entry.site).map((tool, i) => ({
       '@type': 'ListItem',
       position: i + 1,
       name: tool.name,
-      url: absoluteUrl(tool.path),
+      url: absoluteUrl(tool),
     })),
   };
 }
 
 export function buildHeadTags(entry: SiteEntry): HeadTag[] {
-  const url = absoluteUrl(entry.path);
-  const image = absoluteUrl('/og.png');
+  const url = absoluteUrl(entry);
+  const image = siteUrl(entry.site, '/og.png');
   const tags: HeadTag[] = [
     { tag: 'script', children: THEME_BOOT_SCRIPT, injectTo: 'head-prepend' },
     { tag: 'title', children: entry.title, injectTo: 'head' },
     meta('name', 'description', entry.description),
     { tag: 'link', attrs: { rel: 'canonical', href: url }, injectTo: 'head' },
     meta('property', 'og:type', entry.ogType ?? 'website'),
-    meta('property', 'og:site_name', SITE_NAME),
+    meta('property', 'og:site_name', siteOf(entry).name),
     meta('property', 'og:url', url),
     meta('property', 'og:title', entry.title),
     meta('property', 'og:description', entry.description),
@@ -128,8 +130,9 @@ export function buildHeadTags(entry: SiteEntry): HeadTag[] {
   for (const [name, content] of Object.entries(entry.verification ?? {})) {
     tags.push(meta('name', name, content));
   }
-  if (entry.kind !== 'hub') tags.push(jsonLd(breadcrumbList(entry)));
-  if (entry.kind === 'hub') tags.push(jsonLd(toolItemList()));
+  // A one-item trail (a site home) is not a breadcrumb.
+  if (breadcrumbs(entry).length > 1) tags.push(jsonLd(breadcrumbList(entry)));
+  if (entry.kind === 'hub') tags.push(jsonLd(toolItemList(entry)));
   if (entry.kind === 'app') for (const block of toolJsonLd(entry)) tags.push(jsonLd(block));
   for (const block of entry.jsonLd ?? []) tags.push(jsonLd(block));
   return tags;
