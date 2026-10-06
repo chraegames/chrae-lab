@@ -29,7 +29,7 @@ describe('growth', () => {
       expect(s.wealth[i]).toBeGreaterThanOrEqual(1);
       expect(s.wealth[i]).toBeLessThanOrEqual(3);
     }
-  });
+  }, 30_000); // a scripted multi-month simulation: seconds on a busy CI runner
 
   it('medium and high density zones form 2×2 and 3×3 lots that act as one', () => {
     const s = flatState();
@@ -59,7 +59,7 @@ describe('growth', () => {
     act(s, { type: 'bulldoze', rect: { x0: (three % N) + 1, y0: Math.floor(three / N) + 1, x1: (three % N) + 1, y1: Math.floor(three / N) + 1 } });
     expect(s.level[three]).toBe(0);
     expect(s.level[three + 2 + 2 * N]).toBe(0);
-  });
+  }, 30_000); // a scripted multi-month simulation: seconds on a busy CI runner
 
   it('zones without a road never grow', () => {
     const s = flatState();

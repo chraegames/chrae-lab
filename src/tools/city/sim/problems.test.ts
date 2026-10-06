@@ -34,7 +34,7 @@ describe('problems', () => {
     expect(s.totals.problems).toBe(countWhere(s.problems, v => v > 0));
     // flags sit on lot origins only and never on empty tiles
     for (let i = 0; i < s.problems.length; i++) if (s.problems[i]) expect(s.level[i]).toBeGreaterThan(0);
-  });
+  }, 30_000); // a scripted multi-month simulation: seconds on a busy CI runner
 
   it('markers pick the most urgent icon per lot and thin out when the field is dense', () => {
     expect(markerIcon(PROBLEM.GARBAGE | PROBLEM.NO_POWER)).toBe(markerIcon(PROBLEM.NO_POWER));

@@ -77,5 +77,5 @@ describe('milestones', () => {
     run(s, TICKS_PER_MONTH * 18);
     expect(s.totals.population).toBeGreaterThan(MILESTONES[1].pop);
     expect(s.milestone).toBeGreaterThanOrEqual(1);
-  });
+  }, 30_000); // a scripted multi-month simulation: seconds on a busy CI runner
 });

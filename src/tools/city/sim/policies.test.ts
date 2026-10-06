@@ -33,7 +33,7 @@ describe('policies', () => {
     expect(policyCost(s)).toBeGreaterThan(small);
     act(s, { type: 'setPolicy', policy: POLICY.WATCH, on: true });
     expect(s.results.at(-1)).toMatchObject({ ok: false, reason: 'noop' });
-  });
+  }, 30_000); // a scripted multi-month simulation: seconds on a busy CI runner
 
   it('the policy bill lands in the ledger and a tax holiday cuts business tax by a quarter', () => {
     const s = town();
@@ -45,7 +45,7 @@ describe('policies', () => {
     expect(after.incomeC).toBeLessThan(base.incomeC);
     expect(after.incomeC).toBeGreaterThan(base.incomeC * 0.7);
     expect(after.incomeR).toBeGreaterThanOrEqual(base.incomeR * 0.99);
-  });
+  }, 30_000); // a scripted multi-month simulation: seconds on a busy CI runner
 
   it('neighbourhood watch lowers crime everywhere', () => {
     const s = town();

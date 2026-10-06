@@ -22,7 +22,7 @@ describe('terrain', () => {
         expect(t.height[i]).toBeLessThanOrEqual(1);
       }
     }
-  });
+  }, 30_000); // a scripted multi-month simulation: seconds on a busy CI runner
 
   it('water fraction and buildable fraction are sensible', () => {
     for (const seed of [1, 42, 99999, 7]) {

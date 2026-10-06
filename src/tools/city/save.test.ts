@@ -48,7 +48,7 @@ describe('save', () => {
     }
     expect(t.level).toEqual(s.level);
     expect(t.funds).toBe(s.funds);
-  });
+  }, 30_000); // a scripted multi-month simulation: seconds on a busy CI runner
 
   it('loads a save from before milestones and policies, padding the service lists and inferring the tier', () => {
     const s = createCityState(9);

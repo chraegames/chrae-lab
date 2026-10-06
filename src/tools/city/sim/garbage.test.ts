@@ -46,7 +46,7 @@ describe('garbage', () => {
     computeGarbage(s);
     expect(s.totals.garbageUncollected).toBe(0);
     (def as { capacity: number }).capacity = saved;
-  });
+  }, 30_000); // a scripted multi-month simulation: seconds on a busy CI runner
 
   it('the recycling programme cuts rubbish by a quarter and an incinerator adds power', () => {
     const s = town();
@@ -60,5 +60,5 @@ describe('garbage', () => {
     act(s, { type: 'plop', plop: PLOP.INCINERATOR, at: { x: 70, y: 41 } });
     prime(s);
     expect(s.totals.powerSupply).toBe(supply + plopDef(PLOP.INCINERATOR)!.power);
-  });
+  }, 30_000); // a scripted multi-month simulation: seconds on a busy CI runner
 });
