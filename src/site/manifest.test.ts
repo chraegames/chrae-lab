@@ -16,7 +16,6 @@ import {
   pathFor,
   relatedTools,
   siteHome,
-  toolsIn,
 } from './manifest';
 
 describe('site manifest', () => {
@@ -78,7 +77,7 @@ describe('site manifest', () => {
     expect(byPath('fire', '/how-it-works/')?.area).toBe('fire-planner');
     expect(byPath('games', '/how-it-works/')).toBeUndefined();
     expect(byPath('games', '/sudoku/')).toBe(bySlug('sudoku'));
-    expect(toolsIn('finance').map(p => p.slug)).toEqual(['fire-planner']);
+    expect(liveTools().filter(p => p.category === 'finance').map(p => p.slug)).toEqual(['fire-planner']);
     expect(livePages().every(p => p.status === 'live')).toBe(true);
     expect(livePages('games').every(p => p.site === 'games')).toBe(true);
     expect(absoluteUrl(bySlug('todo'))).toBe('https://tools.chraegames.cloud/todo/');
@@ -111,7 +110,7 @@ describe('site manifest', () => {
     const guide = bySlug('tv-guide');
     expect(guide.kind).toBe('app');
     expect(guide.category).toBe('utilities');
-    expect(toolsIn('utilities').map(p => p.slug)).toContain('tv-guide');
+    expect(liveTools('tools').filter(p => p.category === 'utilities').map(p => p.slug)).toContain('tv-guide');
     expect(relatedTools(guide).map(p => p.slug)).not.toContain('tv-guide');
     expect(relatedTools(guide)[0]).toBe(bySlug('unit-converter'));
     for (const c of contentPages().filter(p => p.area === 'tv-guide')) {

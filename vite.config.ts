@@ -1,6 +1,6 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
-import { writeFileSync } from 'node:fs'
+import { copyFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { renderRootForPath, buildSitemap, buildRobots, build404, buildWebManifest, normalizePath } from './scripts/prerender'
 import { buildHeadTags } from './scripts/head'
@@ -27,8 +27,8 @@ const outDir = resolve(__dirname, 'dist', SITE)
 //   - transformIndexHtml: inject <head> tags (title/canonical/OG/JSON-LD) in dev
 //     and build, plus the prerendered markup into <div id="root"> at build time
 //     (replaced on mount by createRoot — never hydrated)
-//   - closeBundle: emit the site's sitemap.xml, robots.txt, 404.html (+ the
-//     FIRE web manifest)
+//   - closeBundle: emit the site's sitemap.xml, robots.txt, 404.html, its share
+//     image (sites/<site>/og.png → /og.png) and, for fire, the web manifest
 function sitePages(): Plugin {
   return {
     name: 'site-pages',
@@ -52,6 +52,7 @@ function sitePages(): Plugin {
       writeFileSync(resolve(outDir, 'sitemap.xml'), buildSitemap(SITE))
       writeFileSync(resolve(outDir, 'robots.txt'), buildRobots(SITE))
       writeFileSync(resolve(outDir, '404.html'), build404(SITE))
+      copyFileSync(resolve(root, 'og.png'), resolve(outDir, 'og.png'))
       if (SITE === 'fire') writeFileSync(resolve(outDir, 'manifest.webmanifest'), buildWebManifest())
     },
   }

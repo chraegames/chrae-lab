@@ -22,6 +22,7 @@ describe('buildHeadTags', () => {
     expect(find(tags, t => t.tag === 'title')[0].children).toBe(entry.title);
     expect(find(tags, t => t.attrs?.property === 'og:site_name')[0].attrs?.content).toBe('FIRE Planner');
     expect(find(tags, t => t.attrs?.property === 'og:image')[0].attrs?.content).toBe('https://fire.chraegames.cloud/og.png');
+    expect(find(tags, t => t.attrs?.property === 'og:image:alt')[0].attrs?.content).toMatch(/^FIRE Planner — /);
 
     const sudoku = buildHeadTags(bySlug('sudoku'));
     expect(find(sudoku, t => t.attrs?.rel === 'canonical')[0].attrs?.href).toBe('https://games.chraegames.cloud/sudoku/');

@@ -890,11 +890,6 @@ export function otherSites(site: SiteId): SiteEntry[] {
   return SITE_IDS.filter(id => id !== site).map(siteHome);
 }
 
-/** Live apps in a category (landings show no placeholders for unshipped tools). */
-export function toolsIn(category: CategoryId): SiteEntry[] {
-  return liveTools().filter(p => p.category === category);
-}
-
 export function byPath(site: SiteId, path: string): SiteEntry | undefined {
   return PAGES.find(p => p.site === site && p.path === path);
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { livePages, SITE_IDS } from '../src/site/manifest';
 
@@ -22,6 +22,21 @@ function htmlFiles(dir: string): string[] {
     return name === 'index.html' ? [full] : [];
   });
 }
+
+describe('share images', () => {
+  // The PNG header stores width/height at bytes 16–23; 1200×630 is what og:image:width/height promise.
+  for (const site of SITE_IDS) {
+    it(`sites/${site}/og.png is a 1200×630 PNG`, () => {
+      const png = readFileSync(join(SITES_DIR, site, 'og.png'));
+      expect(png.subarray(1, 4).toString()).toBe('PNG');
+      expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
+    });
+  }
+
+  it('no shared og.png in public/ (public/ ships to every site)', () => {
+    expect(existsSync(resolve(__dirname, '..', 'public', 'og.png'))).toBe(false);
+  });
+});
 
 describe('no stray html entries', () => {
   it('every sites/<site>/**/index.html belongs to a live page of that site', () => {

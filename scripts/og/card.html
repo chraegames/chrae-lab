@@ -1,0 +1,94 @@
+<!doctype html>
+<!--
+  Source for the per-site share images (sites/<site>/og.png, 1200×630).
+  Open as file://…/scripts/og/card.html?site=fire|games|tools and screenshot the
+  1200×630 viewport — see "Share images" in CLAUDE.md. Fonts are the same
+  self-hosted Fontsource files the site ships.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: 'Newsreader'; src: url(../../node_modules/@fontsource-variable/newsreader/files/newsreader-latin-wght-normal.woff2) format('woff2'); font-weight: 200 800; }
+  @font-face { font-family: 'Newsreader'; font-style: italic; src: url(../../node_modules/@fontsource-variable/newsreader/files/newsreader-latin-wght-italic.woff2) format('woff2'); font-weight: 200 800; }
+  @font-face { font-family: 'Space Grotesk'; src: url(../../node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2) format('woff2'); font-weight: 300 700; }
+  @font-face { font-family: 'Plex Mono'; src: url(../../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2) format('woff2'); font-weight: 400; }
+  @font-face { font-family: 'Plex Mono'; src: url(../../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2) format('woff2'); font-weight: 500; }
+  :root { --bg: #FAF9F6; --surface: #FFFFFF; --ink: #14171A; --ink-2: #3C4249; --ink-3: #6A7179; --border: rgba(20,22,24,0.12); --border-strong: rgba(20,22,24,0.24); }
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: var(--bg); }
+  .card { position: relative; box-sizing: border-box; width: 1200px; height: 630px; padding: 72px 80px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 56px; align-items: center;
+          background-image: radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--accent) 13%, transparent) 0, transparent 48%); }
+  .card::after { content: ''; position: absolute; inset: 0; border-top: 10px solid var(--accent); pointer-events: none; }
+  .eyebrow { font: 500 20px/1 'Plex Mono', monospace; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin-bottom: 30px; display: flex; align-items: center; gap: 14px; }
+  .eyebrow i { width: 22px; height: 22px; border-radius: 4px; background: var(--accent); display: block; }
+  h1 { font: 400 84px/0.98 'Newsreader', serif; letter-spacing: -0.03em; margin: 0 0 26px; color: var(--ink); }
+  h1 em { font-style: italic; color: var(--accent); }
+  p { font: 400 27px/1.4 'Space Grotesk', sans-serif; color: var(--ink-2); margin: 0 0 40px; max-width: 26ch; }
+  .pill { display: inline-flex; align-items: center; gap: 12px; padding: 12px 20px; border: 1.5px solid var(--border-strong); border-radius: 999px; background: var(--surface); font: 400 21px/1 'Plex Mono', monospace; color: var(--ink-2); }
+  .pill i { width: 10px; height: 10px; border-radius: 50%; background: #2F9E5B; display: block; }
+  .motif { height: 420px; border: 1.5px solid var(--border-strong); border-radius: 8px; background-color: var(--surface);
+           background-image: radial-gradient(circle at 1px 1px, var(--border-strong) 1.2px, transparent 0); background-size: 22px 22px; position: relative; overflow: hidden; }
+  /* fire: accumulation then drawdown */
+  .bars { position: absolute; left: 34px; right: 34px; bottom: 34px; top: 60px; display: flex; align-items: flex-end; gap: 9px; }
+  .bars span { flex: 1; border-radius: 3px 3px 0 0; background: var(--accent); }
+  .bars span.d { background: #E0795B; }
+  /* games + tools: tiles */
+  .tiles { position: absolute; inset: 40px; display: grid; gap: 16px; }
+  .tile { border-radius: 8px; background: color-mix(in srgb, var(--c) 13%, transparent); color: var(--c); display: flex; align-items: center; justify-content: center; position: relative; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 20px); gap: 7px; }
+  .grid3 b { width: 20px; height: 20px; border-radius: 3px; background: currentColor; display: block; }
+</style>
+</head>
+<body>
+<div class="card" id="card"></div>
+<script>
+const SITES = {
+  fire: {
+    accent: '#0E8577', name: 'FIRE Planner', host: 'fire.chraegames.cloud',
+    h1: 'Plan your retirement, <em>year by year.</em>',
+    p: 'Income, taxes and withdrawals — free, private, in your browser.',
+    motif: () => {
+      const hs = [14, 19, 25, 31, 38, 46, 55, 64, 74, 84, 92, 86, 76, 64, 52, 40];
+      return `<div class="bars">${hs.map((h, i) => `<span class="${i > 10 ? 'd' : ''}" style="height:${h}%;opacity:${i > 10 ? 0.9 : 0.35 + i * 0.06}"></span>`).join('')}</div>`;
+    },
+  },
+  games: {
+    accent: '#B4501F', name: 'Chrae Games', host: 'games.chraegames.cloud',
+    h1: 'Quick games that play <em>in your browser.</em>',
+    p: 'Sudoku, Go, Magic Tower, a city builder and more — no download.',
+    motif: () => tiles('#B4501F', [
+      `<div class="grid3">${[1, .3, .3, .3, 1, .3, .3, .3, 1].map(o => `<b style="opacity:${o}"></b>`).join('')}</div>`,
+      `<div style="display:flex;gap:10px"><b style="width:44px;height:44px;border-radius:50%;background:currentColor;display:block"></b><b style="width:44px;height:44px;border-radius:50%;box-shadow:inset 0 0 0 3px currentColor;display:block"></b></div>`,
+      `<div style="display:flex;align-items:flex-end;gap:6px;height:64px">${[45, 85, 60, 30].map((h, i) => `<b style="width:15px;height:${h}%;background:currentColor;border-radius:2px;display:block;opacity:${i % 3 ? 1 : .65}"></b>`).join('')}</div>`,
+      `<div style="width:62px;height:62px;border-radius:50%;background:var(--c);display:flex;align-items:center;justify-content:center;font:500 24px 'Plex Mono';color:#fff">42</div>`,
+    ]),
+  },
+  tools: {
+    accent: '#4457C9', name: 'Chrae Tools', host: 'tools.chraegames.cloud',
+    h1: 'Small tools that run <em>in your browser.</em>',
+    p: 'A converter, a calculator, a to-do list and a TV guide — no accounts.',
+    motif: () => tiles('#4457C9', [
+      `<div style="display:flex;align-items:center"><b style="width:38px;height:38px;border-radius:6px;background:currentColor;display:block;position:relative;left:8px"></b><b style="width:38px;height:38px;border-radius:50%;box-shadow:inset 0 0 0 3px currentColor;display:block;position:relative;right:8px"></b></div>`,
+      `<div style="display:grid;grid-template-columns:repeat(2,22px);gap:12px">${[1, .45, .45, 1].map(o => `<b style="width:22px;height:22px;border-radius:4px;background:currentColor;display:block;opacity:${o}"></b>`).join('')}</div>`,
+      `<div style="display:flex;flex-direction:column;gap:12px">${[1, .55, .28].map(o => `<b style="width:62px;height:13px;border-radius:4px;background:currentColor;display:block;opacity:${o}"></b>`).join('')}</div>`,
+      `<div style="display:flex;flex-direction:column;align-items:center;gap:9px"><b style="width:76px;height:46px;border-radius:6px;background:currentColor;display:block"></b><b style="width:34px;height:5px;background:currentColor;opacity:.5;display:block"></b></div>`,
+    ], '#5E7A22'),
+  },
+};
+function tiles(c, glyphs, c2) {
+  return `<div class="tiles" style="grid-template-columns:repeat(2,1fr)">${glyphs.map((g, i) => `<div class="tile" style="--c:${c2 && i === 2 ? c2 : c}">${g}</div>`).join('')}</div>`;
+}
+const s = SITES[new URLSearchParams(location.search).get('site') ?? 'fire'];
+document.documentElement.style.setProperty('--accent', s.accent);
+document.getElementById('card').innerHTML = `
+  <div>
+    <div class="eyebrow"><i></i>${s.name}</div>
+    <h1>${s.h1}</h1>
+    <p>${s.p}</p>
+    <span class="pill"><i></i>${s.host}</span>
+  </div>
+  <div class="motif">${s.motif()}</div>`;
+document.fonts.ready.then(() => document.body.setAttribute('data-ready', ''));
+</script>
+</body>
+</html>
