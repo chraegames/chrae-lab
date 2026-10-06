@@ -32,13 +32,6 @@ describe('site manifest', () => {
     }
   });
 
-  it('slugs are the pre-split paths: the apex 301 map depends on it', () => {
-    for (const p of PAGES.filter(p => p.kind !== 'hub')) {
-      // fire pages lived under /fire-planner/; games and tools kept their paths
-      const expected = p.site === 'fire' ? `/fire-planner${p.path === '/' ? '/' : p.path}` : p.path;
-      expect(`/${p.slug}/`, p.slug).toBe(expected);
-    }
-  });
 
   it('every site has exactly one home at "/": the planner on fire, a landing on games and tools', () => {
     for (const id of SITE_IDS) {

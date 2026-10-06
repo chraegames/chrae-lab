@@ -8,8 +8,6 @@ from this one repo:
 - **[games.chraegames.cloud](https://games.chraegames.cloud/)** — browser games
 - **[tools.chraegames.cloud](https://tools.chraegames.cloud/)** — everyday tools
 
-(The old `chraegames.cloud` address 301-redirects every page to its new home.)
-
 | Site  | Tool | Live |
 |-------|------|------|
 | fire  | **FIRE Planner** — retirement / FIRE projection with US federal tax, three account types and a withdrawal optimizer | [fire.chraegames.cloud](https://fire.chraegames.cloud/) |
@@ -70,14 +68,13 @@ npm install
 npm run dev      # FIRE site dev server (also dev:games, dev:tools)
 npm test         # unit tests (Vitest)
 npm run lint     # ESLint
-npm run build    # type-check + all three sites → dist/{fire,games,tools} (+ dist/legacy)
+npm run build    # type-check + all three sites → dist/{fire,games,tools}
 ```
 
 ## Deploying
 
 Each of `dist/fire`, `dist/games` and `dist/tools` is a self-contained static
-site for its subdomain; `dist/legacy` is what the old apex still serves (the
-storage bridge). `deploy/nginx.conf` serves all of them from one container —
+site for its subdomain. `deploy/nginx.conf` serves all three from one container —
 see `DEPLOY.md`. On a generic static host, point each subdomain at its folder.
 
 ### Cloudflare Pages

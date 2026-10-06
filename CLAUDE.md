@@ -7,7 +7,7 @@ Each site is its own Vite **multi-page** build (`SITE=fire|games|tools`, root `s
 - **fire.chraegames.cloud** — the FIRE planner (the original and by far the largest tool) at `/`, its SEO content guides beneath it (`/how-it-works/`, …).
 - **games.chraegames.cloud** — a games landing at `/` + `/sudoku/`, `/bingo/`, `/go/`, `/magic-tower/`, `/city/`.
 - **tools.chraegames.cloud** — a tools landing at `/` + `/unit-converter/`, `/calculator/`, `/todo/`, `/tv-guide/` (a five-page guide with four content chapters beneath it).
-- The bare apex `chraegames.cloud` (+ `www.`, `fireplan.`) only 301s old URLs to their new homes and serves `/migrate.html`, the one-time localStorage bridge — see [Split + legacy apex](#split--legacy-apex).
+- The bare apex `chraegames.cloud`, `www.` and `fireplan.` were retired on 2026-10-06 (no DNS, no redirects) — see [The split](#the-split).
 
 Every page derives from one manifest — see [Site manifest](#site-manifest--srcsitemanifestts).
 
@@ -24,21 +24,19 @@ sites/games/index.html             # games landing (prerendered <Landing site="g
 sites/games/<game>/index.html      # sudoku, bingo, go, magic-tower, city (src/tools/<game>/main.tsx)
 sites/tools/index.html             # tools landing (<Landing site="tools"/>)
 sites/tools/<tool>/index.html      # unit-converter, calculator, todo, tv-guide (+ tv-guide/<chapter>/)
-legacy/migrate.html                # the apex storage bridge (copied to dist/legacy/)
-deploy/nginx.conf                  # production nginx: host → dist/<site>, apex 301 map
+deploy/nginx.conf                  # production nginx: host → dist/<site>
 scripts/
   head.ts                 # buildHeadTags(entry): title/canonical/OG/JSON-LD + THEME_BOOT_SCRIPT
   prerender.tsx           # renderRootForPath(site, path) + per-site sitemap/robots/404/webmanifest (build-time, Node)
 src/
   site/
     manifest.ts           # THE page manifest: SITES (origins/names), CATEGORIES, PAGES + helpers
-    legacyStorage.ts      # one-time localStorage import from the old apex origin
     prerenderPages.tsx    # manifest path → pure component rendered into #root at build time
     ToolStatic.tsx        # no-JS fallback prerendered for tool pages
     accent.ts             # accentFor(category): per-page --accent* overrides (category accents)
   hub/
     Landing.tsx           # pure landing for games/tools (site prop): hero + CSS motif, per-category cards, Guides band, "More from Chrae Lab", footer
-    main.ts               # landing entry: styles + analytics + theme toggle + legacy import (no React)
+    main.ts               # landing entry: styles + analytics + theme toggle (no React)
   tools/<tool>/           # main.tsx (entry) + App.tsx + pure logic .ts + tests
   tools/go/               # online Go: go.ts (rules) + match.ts (pairing/session state machine) + net.ts (Trystero / BroadcastChannel transports) — see "Go"
   tools/magic-tower/      # 魔塔: combat.ts + floorgen.ts (generator) + zonesim.ts/solver.ts/policies.ts (verification) + game.ts (reducer) + sprites/render — see "Magic Tower"
@@ -75,7 +73,7 @@ Recharts (FIRE charts), Trystero (Go networking) and three.js (City, `import()`e
 
 ## Site manifest — `src/site/manifest.ts`
 
-Pure data, importable from Node (vite config) and the browser alike. `SITES` holds each site's origin, brand name (`FIRE Planner`, `Chrae Games`, `Chrae Tools`; `BRAND_NAME = 'Chrae Lab'` is the umbrella) and home-link label. `PAGES: SiteEntry[]` lists every URL with `{ slug, site, path, kind: 'hub'|'app'|'content', status: 'live'|'soon', name, tagline, title, description, category?, area?, label?, ogType?, jsonLd?, verification?, about?, updated? }`. **`path` is relative to the entry's site** (so `/` exists once per site); **`slug` is the global id and equals the pre-split path** (`fire-planner/how-it-works`, `sudoku`; landings are `games`/`tools`) — the apex 301 map relies on that, `manifest.test.ts` pins it. Look entries up with `bySlug(slug)` or `byPath(site, path)`; link with `hrefFor(to, fromSite)` (relative on the same site, absolute across sites) and `absoluteUrl(entry)`. `relatedTools` never crosses sites; `otherSites(site)` gives the other two homes for "More from Chrae Lab" links. Category ↔ site: finance → fire, games → games, utilities/productivity → tools. It drives:
+Pure data, importable from Node (vite config) and the browser alike. `SITES` holds each site's origin, brand name (`FIRE Planner`, `Chrae Games`, `Chrae Tools`; `BRAND_NAME = 'Chrae Lab'` is the umbrella) and home-link label. `PAGES: SiteEntry[]` lists every URL with `{ slug, site, path, kind: 'hub'|'app'|'content', status: 'live'|'soon', name, tagline, title, description, category?, area?, label?, ogType?, jsonLd?, verification?, about?, updated? }`. **`path` is relative to the entry's site** (so `/` exists once per site); **`slug` is the global id** (the pre-split path: `fire-planner/how-it-works`, `sudoku`; landings are `games`/`tools`), used for Vite input names, prerender mapping and `bySlug`. Look entries up with `bySlug(slug)` or `byPath(site, path)`; link with `hrefFor(to, fromSite)` (relative on the same site, absolute across sites) and `absoluteUrl(entry)`. `relatedTools` never crosses sites; `otherSites(site)` gives the other two homes for "More from Chrae Lab" links. Category ↔ site: finance → fire, games → games, utilities/productivity → tools. It drives:
 
 - **Vite inputs** — `vite.config.ts` builds `rollupOptions.input` from `livePages(SITE)`; a live entry without `sites/<site>/<path>/index.html` fails `scripts/pages.test.ts` before it fails the build. The HTML keeps root-absolute `/src/...` script URLs; an alias in `vite.config.ts` maps them to the repo's `src/`. Tests use `vitest.config.ts` (repo root), not the per-site Vite config.
 - **`<head>` tags** — the `sitePages()` plugin (`vite.config.ts`) calls `buildHeadTags(entry)` (`scripts/head.ts`) for every page in dev and build: `<title>`, description, canonical, OG/Twitter, robots, verification metas, `BreadcrumbList` JSON-LD (from `breadcrumbs(entry)`: site home → parent → page, emitted only when it has 2+ items), **auto-generated `WebApplication` + `FAQPage` for any app with `about`** (FIRE keeps hand-written blocks in `entry.jsonLd` instead), `ItemList` of the site's own apps + a `WebSite` block on each landing, `og:site_name` = the site's name, the anti-flash background style, and the theme boot script. **Per-page `index.html` files therefore contain no `<title>`/meta** — only charset, viewport, icons, `<div id="root"></div>` and the module script.
@@ -84,18 +82,15 @@ Pure data, importable from Node (vite config) and the browser alike. `SITES` hol
 - **Tool About/FAQ copy** — `entry.about: ToolAbout { intro, features[], faq[{q,a}], applicationCategory }` is rendered by the pure `src/site/ToolAbout.tsx` in *both* render states: inside `ToolStatic` (build-time, no-JS) and below `<main>` in `ToolShell` (live), so crawlers see identical text either way, and it's the same text the `FAQPage` JSON-LD carries (Google requires parity). `ToolAbout` also renders the "More from Chrae Lab" nav (`relatedTools(entry)`: same category first) — that's the tool→tool internal-link mesh. **Layout (2026-09-02):** the tool owns the first viewport; `ToolAbout` renders a full-width sunken band (`--bg-soft`, `ta-*` classes from `src/site/toolAboutStyles.ts`) below it — About + features left, FAQ right as native `<details>` accordions (closed by default, so the copy stays in the DOM and works without JS but doesn't dominate the page; this was the deliberate trade after tool pages looked text-heavy). Below it, a "More from <site>" row (same-site siblings + home) and an "Also from Chrae Lab" row (the other two sites, absolute URLs). It is rendered *outside* the max-width column (`ToolShell` puts it between `<main>` and the footer; `GuideShell` likewise on the overview only) so the band bleeds edge to edge.
 - **Landing cards, breadcrumbs, ToolShell header, FIRE "Related" links** (`routeMeta.ts` filters content entries with `area === 'fire-planner'`).
 
-**Adding a tool:** add a `PAGES` entry with its `site` (`status: 'soon'` until it works — a `soon` entry is invisible everywhere: no landing card, no Vite input, no sitemap; landings deliberately show no "coming soon" placeholders), create `sites/<site>/<slug>/index.html` (copy `sites/tools/calculator/index.html`), `src/tools/<slug>/main.tsx` (`import '../../styles/global'; initAnalytics(); track('tool_opened', { tool }); void importLegacyStorage(site).then(() => createRoot(...))`), wrap the UI in `ToolShell` (`entry={bySlug('<slug>')}`), declare any storage key in `persistence.ts` **and add it to `SITE_STORAGE_KEYS`** (`legacyBridge.test.ts` fails otherwise; only needed for keys that existed before the split, but the test is strict), add it to the apex map in `deploy/nginx.conf` only if it had a pre-split URL, write the `about` block (3+ features, 3+ FAQs, factual — `manifest.test.ts` enforces presence) and set `updated`, then flip to `live`. No change to `vite.config.ts`, the sitemap, or any `<head>` is needed.
+**Adding a tool:** add a `PAGES` entry with its `site` (`status: 'soon'` until it works — a `soon` entry is invisible everywhere: no landing card, no Vite input, no sitemap; landings deliberately show no "coming soon" placeholders), create `sites/<site>/<slug>/index.html` (copy `sites/tools/calculator/index.html`), `src/tools/<slug>/main.tsx` (`import '../../styles/global'; initAnalytics(); track('tool_opened', { tool }); createRoot(...)`), wrap the UI in `ToolShell` (`entry={bySlug('<slug>')}`), declare any storage key in `persistence.ts`, write the `about` block (3+ features, 3+ FAQs, factual — `manifest.test.ts` enforces presence) and set `updated`, then flip to `live`. No change to `vite.config.ts`, the sitemap, or any `<head>` is needed.
 
 **Theme boot.** `THEME_BOOT_SCRIPT` (`scripts/head.ts`) runs before CSS on every page: stored `firePlannerTheme` wins, else `prefers-color-scheme`. `useTheme.readInitial()` applies the identical rule — keep the two in lockstep or pages flip theme on mount. The landings have no React; `src/hub/main.ts` toggles `data-theme` by hand and writes the same key. The theme is per origin now: each of the three sites remembers its own.
 
-### Split + legacy apex
+### The split
 
-Until 2026-10-05 everything lived on `https://chraegames.cloud` (hub at `/`, planner at `/fire-planner/`). Now:
+Until 2026-10-05 everything lived on `https://chraegames.cloud` (hub at `/`, planner at `/fire-planner/`). The split moved each page to its site (slugs kept), and for one day the old hosts 301-redirected and served a localStorage bridge for the new origins. On 2026-10-06 the user retired `chraegames.cloud`, `www.` and `fireplan.` outright — no DNS, no redirects, no bridge. Consequences: old links are dead, and anything a visitor saved under the old origin and never carried over through the bridge is no longer reachable. Don't reintroduce links to the apex; `seo.test.ts` and `head.test.ts` fail on them.
 
-- **Redirects** — `deploy/nginx.conf` serves `dist/<site>` by Host and 301s every apex/`www`/`fireplan` URL to its new home via the `$legacy_target` map (old hub → tools landing). `scripts/nginx.test.ts` replays `/<slug>/` for every live page through that map in JS and asserts it lands on `absoluteUrl(entry)`.
-- **Saved data** — localStorage is per origin, so every app entry (and the landings) `await`s `importLegacyStorage(site)` before mounting: once per origin (`chraeLab.legacyImported`), it frames `https://chraegames.cloud/migrate.html` (same *site*, so storage isn't partitioned), asks for `SITE_STORAGE_KEYS[site]`, writes only keys missing locally, and times out after 2.5 s. Skipped on localhost and any non-`*.chraegames.cloud` host. The bridge answers only `https://(fire|games|tools).chraegames.cloud` and only allow-listed keys; nginx sends `frame-ancestors` for it. Keep the apex DNS + `/migrate.html` alive for months; eventually both can go along with this mechanism.
 - **Dev** — `npm run dev` (fire), `dev:games`, `dev:tools`; `preview:*` likewise after a build. Cross-site links in dev point at production (they are absolute).
-- **Retiring it** — not before 2027-02-21 for `fireplan.`, 2027-10-06 for the apex/`www.`; the checklist (incl. which code to delete) is in DEPLOY.md, "Retiring the legacy hosts".
 
 ### Share images
 
@@ -190,7 +185,6 @@ else, based on activePlan:
 | `chraeLab.magicTower.lang` | `MAGIC_TOWER_LANG_KEY` | Magic Tower UI language (`'en'` \| `'zh'`); the game shows one language at a time |
 | `chraeLab.city` | `CITY_KEY` | City save: seed, tick, funds, scalars + RLE/base64 layers (`src/tools/city/save.ts`); terrain and networks are rebuilt on load |
 | `chraeLab.city.prefs` | `CITY_PREFS_KEY` | City view prefs (`ui/prefs.ts`): day/night cycle, problem icons, seed whose getting-started checklist was dismissed |
-| `chraeLab.legacyImported` | `LEGACY_DONE_KEY` (`site/legacyStorage.ts`) | Timestamp: this origin already ran the one-time import from the old apex |
 | `financial-planner-scenarios` | legacy | Pre-profiles "single profile, many scenarios" shape |
 | `financial-planner-input` | legacy | Pre-scenarios "one plan" shape |
 | `financial-planner-plans` | legacy | Withdrawal schedules from the pre-scenarios shape |
@@ -334,8 +328,7 @@ Engine + utility coverage, no DOM tests. Run with `npm test` (one-shot) or `npm 
 | `pages/seo.test.ts` | Prerender output per page (each landing shows only its site + links the other two, FIRE hero, content headings, tool About/FAQ + sibling links, nothing links the apex or `/fire-planner/`), per-site sitemap/robots/404/webmanifest |
 | `scripts/head.test.ts` | Canonical/OG URLs on each subdomain, BreadcrumbList shape, FIRE JSON-LD blocks, tool WebApplication/FAQPage derived from `about`, landing WebSite/ItemList, no apex URLs, theme boot script uses `THEME_KEY` |
 | `scripts/pages.test.ts` | Every live manifest entry has `sites/<site>/<path>/index.html`, no stray entries, old root-level entries gone |
-| `scripts/nginx.test.ts` | Apex 301 map sends every pre-split URL to its new canonical URL (query strings, missing slashes, old hub); host → dist folder; bridge `frame-ancestors` |
-| `scripts/legacyBridge.test.ts` | Import only on prod subdomains, never overwrites, every persisted key owned by a site, `legacy/migrate.html` key/origin allow-lists agree with the client |
+| `scripts/nginx.test.ts` | `deploy/nginx.conf` serves exactly the three site hosts from their dist folders; retired hosts are gone |
 | `tools/unit-converter/*.test.ts` | Unit round-trips + pinned conversions, result formatting |
 | `tools/calculator/*.test.ts` | Expression parser (precedence, right-assoc `^`, deg/rad, errors with positions), history cap |
 | `tools/todo/*.test.ts` | Reducer actions + invariants (active list always valid), due-date labels, load/save validation |
@@ -414,7 +407,7 @@ If you change the Intro's copy, also update the FIRE entry's `description`/`json
 - **Don't `hydrateRoot` any page.** The prerendered `#root` is intentionally *replaced* by `createRoot().render()`, not hydrated — the server has no localStorage, so hydration would mismatch.
 - **Don't put `<title>` or meta tags in an `index.html`.** They're generated from the manifest; a hand-written one would duplicate. Keep the literal `<div id="root"></div>` too — the prerender plugin string-replaces it and throws if it's gone.
 - **Don't make Magic Tower adaptive.** Nothing in `floorgen.ts` may read the player's actual HP/stats; the user's stance is a fixed puzzle where getting stuck is allowed and save slots are the safety net.
-- **Don't hardcode cross-site links or the apex.** `/` is the current site's home (on fire that *is* the planner). Link to another site through `hrefFor`/`absoluteUrl`/`otherSites`; never to `https://chraegames.cloud/…` (it only redirects). `seo.test.ts` and `head.test.ts` fail on apex or `/fire-planner/` links.
+- **Don't hardcode cross-site links or the apex.** `/` is the current site's home (on fire that *is* the planner). Link to another site through `hrefFor`/`absoluteUrl`/`otherSites`; never to `https://chraegames.cloud/…` (retired, does not resolve). `seo.test.ts` and `head.test.ts` fail on apex or `/fire-planner/` links.
 
 ---
 
@@ -427,5 +420,5 @@ If you change the Intro's copy, also update the FIRE entry's `description`/`json
 - **Adding a tool or page**: see the recipe under [Site manifest](#site-manifest--srcsitemanifestts). Tool code goes in `src/tools/<slug>/`, wrapped in `components/layout/ToolShell.tsx`.
 - **Refreshing brand copy**: landing copy is `src/hub/Landing.tsx` (`COPY`) + the `games`/`tools` entries in `src/site/manifest.ts` (the h1 wraps the closing clause "in your browser." in an `<em>`, so `seo.test.ts` compares the tagline against tag-stripped HTML). Tool About/FAQ copy is the `about` block on each manifest entry (bump `updated` too). FIRE copy is `IntroContent.tsx` (feeds both `Intro.tsx` and the prerendered FIRE home; the static tree also carries its own breadcrumb + "Runs on this device" pill because it has no AppBar) + the `fire-planner` manifest entry (description + JSON-LD) + `AboutModal.tsx` + `README.md`. Content-guide copy lives in `src/pages/<slug>/Content.tsx` with meta in the manifest.
 - **Retuning the palette / fonts**: `styles/tokens.css` (values only — keep the token names, ~40 files consume them), then `ANTI_FLASH_STYLE` + the `theme-color` metas in every `sites/**/index.html` + `buildWebManifest()` in `scripts/prerender.tsx` (see Theme boot) + the share-image card colours (`scripts/og/card.html`). Design handoffs live in the untracked `Design/` folder (v3 = current look).
-- **Changing a domain**: `ROOT_DOMAIN` / `SITES` in the manifest, `deploy/nginx.conf`, the `ALLOWED_ORIGIN` regex in `legacy/migrate.html`, and the Traefik labels in `DEPLOY.md` — robots/sitemaps are generated.
+- **Changing a domain**: `ROOT_DOMAIN` / `SITES` in the manifest, `deploy/nginx.conf`, and the Traefik labels in `DEPLOY.md` — robots/sitemaps are generated.
 - **Moving the source repo**: `SITE_REPO` in the manifest is the only place the GitHub URL lives — every footer, the FIRE About modal and the landings' `WebSite.publisher.sameAs` read it (`seo.test.ts` asserts every prerendered page links to it). Also update `package.json` `repository`.

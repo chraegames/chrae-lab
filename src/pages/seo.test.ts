@@ -18,7 +18,6 @@ describe('renderRootForPath', () => {
     const games = renderRootForPath('games', '/index.html');
     // the closing clause of the tagline is wrapped in <em>, so compare text-only
     expect(games.replace(/<[^>]+>/g, '')).toContain(siteHome('games').tagline);
-    expect(games).toContain('data-site="games"');
     for (const p of liveTools('games')) expect(games).toContain(`href="${p.path}"`);
     for (let i = 1; i <= liveTools('games').length; i++) expect(games).toContain(`>${String(i).padStart(2, '0')}<`);
     for (const p of liveTools('tools')) expect(games).not.toContain(`href="${p.path}"`);

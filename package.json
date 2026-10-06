@@ -16,7 +16,7 @@
     "dev:games": "SITE=games vite",
     "dev:tools": "SITE=tools vite",
     "build": "tsc -b && npm run build:sites",
-    "build:sites": "rm -rf dist && SITE=fire vite build && SITE=games vite build && SITE=tools vite build && rm -rf dist/legacy && mkdir -p dist/legacy && cp legacy/migrate.html dist/legacy/ && tsx scripts/legacy-robots.ts",
+    "build:sites": "rm -rf dist && SITE=fire vite build && SITE=games vite build && SITE=tools vite build",
     "lint": "eslint .",
     "preview": "SITE=fire vite preview",
     "preview:games": "SITE=games vite preview",

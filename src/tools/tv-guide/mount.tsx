@@ -5,19 +5,15 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../../styles/global';
 import { initAnalytics, track } from '../../utils/analytics';
-import { importLegacyStorage } from '../../site/legacyStorage';
 import GuideApp from './App';
 import type { GuidePageId } from './pages';
 
 export function mountGuide(page: GuidePageId): void {
   initAnalytics();
   track('tool_opened', { tool: 'tv-guide', page });
-  // The guide stores nothing itself, but this runs the tools site's one-time import (theme included).
-  void importLegacyStorage('tools').then(() => {
-    createRoot(document.getElementById('root')!).render(
-      <StrictMode>
-        <GuideApp page={page} />
-      </StrictMode>,
-    );
-  });
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <GuideApp page={page} />
+    </StrictMode>,
+  );
 }

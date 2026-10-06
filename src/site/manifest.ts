@@ -6,8 +6,7 @@
 //   tools → https://tools.chraegames.cloud  tools landing + one page per tool
 //
 // Paths are relative to their site's origin, so '/' exists once per site. Slugs
-// are global ids (stable across the split: they are the pre-split paths without
-// slashes, which is what the apex 301 map in deploy/nginx.conf relies on).
+// are global ids (the pre-split paths without slashes, kept for stability).
 //
 // Pure data (no React, no browser APIs) so it can be consumed from the Vite
 // config / prerender plugin (Node), the pure prerendered components, and the
@@ -18,9 +17,8 @@
 // src/site/prerenderPages.tsx if it isn't a plain ToolStatic page. Vite inputs,
 // <head> tags, sitemap, landing-page cards and breadcrumbs all derive from this file.
 
-/** Registrable domain. The bare apex only redirects now (deploy/nginx.conf) and serves the storage bridge. */
+/** Registrable domain. Only its subdomains serve pages; the bare apex is retired. */
 export const ROOT_DOMAIN = 'chraegames.cloud';
-export const LEGACY_ORIGIN = `https://${ROOT_DOMAIN}`;
 /** Umbrella brand: publisher in JSON-LD, "More from Chrae Lab" links. */
 export const BRAND_NAME = 'Chrae Lab';
 /** Public source repository — linked from every footer and the Organization JSON-LD. */

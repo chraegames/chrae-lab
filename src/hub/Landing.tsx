@@ -1,8 +1,7 @@
 // The landing page of the games and tools sites (`<Landing site="games" />`).
 // PURE: no hooks, no browser APIs — it is rendered to a static string at build
-// time and shipped without React. The only behaviour on the page (theme toggle,
-// one-time storage import) is wired up by src/hub/main.ts, which reads the
-// site from the root's data-site attribute.
+// time and shipped without React. The only behaviour on the page (theme toggle)
+// is wired up by src/hub/main.ts.
 //
 // Layout follows the Design/v3 "Night Console" handoff: header with a mono
 // category nav, two-column hero with a CSS motif, one section per category
@@ -279,7 +278,7 @@ export function Landing({ site }: { site: 'games' | 'tools' }) {
   const indexOf = new Map(categories.flatMap(cat => toolsOf(cat.id)).map((t, i) => [t.slug, i + 1]));
   const [motifA, motifB = motifA] = categories.map(c => c.id);
   return (
-    <div className="hub" data-site={site} style={accentFor(site === 'games' ? 'games' : 'utilities')}>
+    <div className="hub" style={accentFor(site === 'games' ? 'games' : 'utilities')}>
       <style>{HUB_STYLES}</style>
 
       <header className="hub-top">

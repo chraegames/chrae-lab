@@ -123,5 +123,3 @@ export function buildWebManifest(): string {
   )}\n`;
 }
 
-/** robots.txt for the bare apex: everything there is a 301, so let crawlers in to see them. */
-export const LEGACY_ROBOTS = `User-agent: *\nAllow: /\n`;
